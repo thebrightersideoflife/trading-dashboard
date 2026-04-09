@@ -1,10 +1,55 @@
 :root {
-  --bg-main: #000000;
-  --bg-card: #111115;
-  --border-color: #1f1f23;
-  --text-main: #ffffff;
-  --text-muted: #94a3b8;
-  --accent-green: #bef264; /* That bright lime from your chart */
-  --accent-red: #f87171;
-  --accent-blue: #3b82f6;
+  /* ── Backgrounds ──────────────────────────────────────────────── */
+  --bg-main:          #0a0a0f;   /* Page background — near black with a blue tint */
+  --bg-card:          #111118;   /* Card / panel surface */
+  --bg-card-hover:    #16161f;   /* Card hover state */
+  --bg-input:         #0d0d14;   /* Form input fill */
+
+  /* ── Borders ──────────────────────────────────────────────────── */
+  --border-color:     #1e1e2a;   /* Subtle divider lines */
+  --border-hover:     #2a2a3a;   /* Hover border */
+
+  /* ── Typography ───────────────────────────────────────────────── */
+  --text-main:        #e8e8f0;   /* Primary text — slightly cool white */
+  --text-muted:       #727293;   /* Secondary / label text */
+  --text-subtle:      #32323f;   /* Disabled / placeholder */
+
+  /* ── Accent — Lime (positive, CTA, active) ────────────────────── */
+  --accent-lime:      #c8f135;   /* Core lime — slightly warmer than pure #bef264 */
+  --accent-lime-dim:  rgba(200, 241, 53, 0.12); /* Lime tint for badges/fills */
+  --accent-lime-glow: rgba(200, 241, 53, 0.06); /* Very faint glow */
+
+  /* ── Semantic colours ─────────────────────────────────────────── */
+  --color-profit:     #c8f135;   /* Positive PnL */
+  --color-loss:       #f03e3e;   /* Negative PnL */
+  --color-loss-dim:   rgba(240, 62, 62, 0.12);
+
+  /* ── Chart ────────────────────────────────────────────────────── */
+  --chart-line:       #c8f135;
+  --chart-fill-top:   rgba(97, 97, 111, 0.55);   /* Bluish-grey gradient top (user's choice) */
+  --chart-fill-bot:   rgba(58, 58, 85, 0);       /* Gradient fades to transparent */
+  --chart-grid:       #1a1a24;
+  --chart-tick:       #52526a;
+
+  /* ── Shadows ──────────────────────────────────────────────────── */
+  --card-shadow:      0 4px 24px -4px rgba(0, 0, 0, 0.6);
+  --modal-shadow:     0 24px 60px -12px rgba(0, 0, 0, 0.8);
+
+  /* ── Gauge gradient (Profit Target arc) ───────────────────────── */
+  --gauge-start:      #f03e3e;   /* Red at bottom-left */
+  --gauge-mid:        #f59f00;   /* Amber at top */
+  --gauge-end:        #c8f135;   /* Lime at bottom-right */
+
+  /* ── Radius / Spacing tokens ──────────────────────────────────── */
+  --radius-sm:        8px;
+  --radius-md:        12px;
+  --radius-lg:        16px;
+  --radius-xl:        20px;
+
+  /* ── Base typography ──────────────────────────────────────────── */
+  --font-size-base:   16px;   /* +2pt from previous ~14px effective base */
+}
+
+html, body {
+  font-size: var(--font-size-base);
 }

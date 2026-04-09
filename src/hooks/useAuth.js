@@ -1,24 +1,35 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../api/supabaseClient'
 
+/**
+ * useAuth
+ *
+ * Returns the current Supabase session and a `sessionReady` flag.
+ * sessionReady = false means Supabase hasn't finished restoring the
+ * session from localStorage yet — components should wait before
+ * making authenticated queries.
+ */
 export function useAuth() {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [session,      setSession]      = useState(null)
+  const [sessionReady, setSessionReady] = useState(false)
 
   useEffect(() => {
-    // Check active sessions 
+    // getSession() resolves the persisted token synchronously on first call
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
+      setSession(session)
+      setSessionReady(true)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    // Keep session in sync across tabs / token refreshes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session)
+        setSessionReady(true)
+      }
+    )
 
     return () => subscription.unsubscribe()
   }, [])
 
-  return { user, loading }
+  return { session, sessionReady, user: session?.user ?? null }
 }
