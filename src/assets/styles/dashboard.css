@@ -54,3 +54,83 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+/* ── Mobile: 375px–768px ────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* Page padding */
+  .dashboard-container {
+    padding: 1rem 0.875rem 3rem;
+  }
+
+  /* Summary/stat grids: 2-col on mobile */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Trades page summary strip */
+  .trades-summary-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Analytics section nav: wrap */
+  .analytics-section-nav {
+    flex-wrap: wrap;
+  }
+
+  /* Journal two-column layout → single column */
+  .journal-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Journal date list: fixed height, horizontal scroll on small screens */
+  .journal-date-list {
+    max-height: 240px !important;
+  }
+
+  /* Calendar: shrink cell min-height */
+  .calendar-cell {
+    min-height: 52px !important;
+    padding: 4px !important;
+  }
+
+  /* Hide week target column on very small screens */
+  .calendar-week-col {
+    display: none !important;
+  }
+
+  /* Calendar grid: 7 equal cols, no week column */
+  .calendar-row-grid {
+    grid-template-columns: repeat(7, 1fr) !important;
+  }
+
+  /* Calendar header grid */
+  .calendar-header-grid {
+    grid-template-columns: repeat(7, 1fr) !important;
+  }
+
+  /* Analytics grids */
+  .analytics-grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+  .analytics-grid-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .analytics-grid-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .analytics-grid-7 {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .analytics-grid-3 {
+    grid-template-columns: 1fr !important;
+  }
+  .analytics-grid-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}

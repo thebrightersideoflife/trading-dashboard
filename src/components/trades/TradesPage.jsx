@@ -118,7 +118,7 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
         </header>
 
         {/* ── Summary strip ─────────────────────────────────────────── */}
-        <div style={{
+        <div className="trades-summary-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '1rem',
@@ -277,6 +277,14 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
 
       </div>
 
+      <style>{`
+        @media (max-width: 768px) {
+          .trades-summary-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 480px) {
+          .trades-summary-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
       {showModal && (
         <AddTradeModal
           onClose={() => setShowModal(false)}

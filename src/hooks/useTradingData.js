@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../api/supabaseClient'
 
-export function useTradingData(sessionReady = true, showDemoProp = null) {
+export function useTradingData(sessionReady = true, showDemoProp = null, equityCutoff = null) {
   const [metrics,      setMetrics]      = useState(null)
   const [equityCurve,  setEquityCurve]  = useState([])
   const [dailyPnl,     setDailyPnl]     = useState([])
@@ -49,7 +49,11 @@ export function useTradingData(sessionReady = true, showDemoProp = null) {
         { data: weekTargetsData, error: weekTargetsErr },
       ] = await Promise.all([
         supabase.from(metricsView).select('*').maybeSingle(),
-        supabase.from(equityView).select('close_time, equity').order('close_time', { ascending: true }),
+        (() => {
+          let q = supabase.from(equityView).select('close_time, equity').order('close_time', { ascending: true })
+          if (equityCutoff) q = q.gte('close_time', equityCutoff)
+          return q
+        })(),
         supabase.from(dailyView).select('day, total_pnl, trades'),
         supabase.from('trades').select('*').order('close_time', { ascending: false }),
         supabase.from('trades').select('id', { count: 'exact', head: true }).eq('is_mock', true),
@@ -148,7 +152,7 @@ export function useTradingData(sessionReady = true, showDemoProp = null) {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [showDemoProp, equityCutoff])
 
   // ── Upsert a week target — local state update + RPC ───────────────
   const upsertWeekTarget = useCallback(async (weekStart, target) => {
@@ -174,7 +178,7 @@ export function useTradingData(sessionReady = true, showDemoProp = null) {
 
   useEffect(() => {
     if (sessionReady) fetchAll()
-  }, [sessionReady, showDemoProp, fetchAll])
+  }, [sessionReady, showDemoProp, equityCutoff, fetchAll])
 
   return {
     metrics,

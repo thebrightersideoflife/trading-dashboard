@@ -8,6 +8,9 @@ import CalendarPage from './components/calendar/CalendarPage';
 import ProfilePage  from './components/profile/ProfilePage.jsx';
 import TradesPage     from './components/trades/TradesPage.jsx';
 import AnalyticsPage  from './components/analytics/AnalyticsPage.jsx';
+import JournalPage    from './components/journal/JournalPage.jsx';
+import HelpPage       from './components/help/HelpPage.jsx';
+import Footer         from './components/layout/Footer.jsx';
 
 function AppLayout({ user, profile, onProfileUpdate, showDemoData, onToggleDemoData, children }) {
   return (
@@ -22,6 +25,7 @@ function AppLayout({ user, profile, onProfileUpdate, showDemoData, onToggleDemoD
       <main style={{ flex: 1 }}>
         {children}
       </main>
+      <Footer />
     </div>
   );
 }
@@ -150,7 +154,7 @@ export default function App() {
           element={
             <ProtectedRoute user={user} sessionReady={sessionReady}>
               {layout(
-                <CalendarPage sessionReady={sessionReady} profile={profile} />
+                <CalendarPage sessionReady={sessionReady} profile={profile} showDemoData={showDemoData} />
               )}
             </ProtectedRoute>
           }
@@ -185,6 +189,20 @@ export default function App() {
         />
 
         <Route
+          path="/journal"
+          element={
+            <ProtectedRoute user={user} sessionReady={sessionReady}>
+              {layout(
+                <JournalPage
+                  sessionReady={sessionReady}
+                  showDemoData={showDemoData}
+                />
+              )}
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/profile"
           element={
             <ProtectedRoute user={user} sessionReady={sessionReady}>
@@ -199,6 +217,11 @@ export default function App() {
               )}
             </ProtectedRoute>
           }
+        />
+
+        <Route
+          path="/help"
+          element={layout(<HelpPage />)}
         />
 
         <Route

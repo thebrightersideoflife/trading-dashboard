@@ -1,127 +1,112 @@
 /**
  * ProfitGauge
  * Props:
- *   value       — drawdown_from_target (e.g. -30.3 means 30.3% below target)
- *   target      — profit_target_pct (e.g. 30 means 30% profit target)
+ *   value  — current % gain from initial balance (e.g. +31.1 or -1.9)
+ *   target — profit_target_pct (e.g. 30)
  *
- * The gauge spans from –target (max loss zone) to +target (goal reached).
- * The needle sits at `value` clamped within that range.
- * Colour sweeps red → amber → lime across the arc.
+ * The full arc is always rendered red → amber → lime.
+ * Only the needle moves — pointing left at worst, up at neutral, right at target.
  */
 export default function ProfitGauge({ value = 0, target = 30 }) {
-  const SIZE     = 160
-  const CX       = SIZE / 2
-  const CY       = SIZE / 2 + 10        // shift centre down so arc fills the card better
-  const R        = 58
-  const STROKE   = 10
+  const SIZE   = 160
+  const CX     = SIZE / 2
+  const CY     = SIZE / 2 + 10
+  const R      = 58
+  const STROKE = 10
 
-  // Arc runs from 180° (left) to 0° (right) — a true semi-circle
-  const START_ANGLE = 180   // left  = worst
-  const END_ANGLE   = 0     // right = best (but we flip: left=neg, right=pos)
-
-  // Map value to angle: clamp value between -target and +target
-  const clamped  = Math.max(-target, Math.min(target, value ?? 0))
-  // Fraction 0 (worst) → 1 (best)
-  const fraction = (clamped + target) / (target * 2)
-  // Needle angle: 180° → 0° as fraction goes 0 → 1
+  // Map value to needle angle
+  // fraction 0 (worst: -target) → 1 (best: +target)
+  const clamped        = Math.max(-target, Math.min(target, value ?? 0))
+  const fraction       = (clamped + target) / (target * 2)
+  // Angle: 180° = left (worst), 90° = up (neutral), 0° = right (best)
   const needleAngleDeg = 180 - fraction * 180
 
-  // ── Arc path helpers ────────────────────────────────────────────
   function polarToXY(angleDeg, r = R) {
     const rad = (angleDeg * Math.PI) / 180
     return {
-      x: CX + r * Math.cos(Math.PI - rad),   // flip so 0° is right
+      x: CX + r * Math.cos(rad),
       y: CY - r * Math.sin(rad),
     }
   }
 
-  function describeArc(startDeg, endDeg, r = R) {
-    const s    = polarToXY(startDeg, r)
-    const e    = polarToXY(endDeg, r)
-    const large = endDeg - startDeg > 180 ? 1 : 0
-    return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y}`
+  // Full semi-circle arc path (always rendered, 180° → 0°)
+  function fullArc(r = R) {
+    const left  = polarToXY(180, r)
+    const right = polarToXY(0,   r)
+    // large-arc=1, sweep=0 (counter-clockwise) draws the top half
+    // large-arc=0, sweep=1: clockwise small arc → passes through top
+    return `M ${left.x} ${left.y} A ${r} ${r} 0 0 1 ${right.x} ${right.y}`
   }
 
-  // Full background arc (grey track)
-  const trackPath = describeArc(0, 180)
+  const needleTip = polarToXY(needleAngleDeg, R - 6)
 
-  // Filled arc up to needle position (0° → needleAngleDeg)
-  const fillPath = needleAngleDeg > 0 ? describeArc(0, needleAngleDeg) : ''
-
-  // Needle tip
-  const needleTip  = polarToXY(needleAngleDeg, R - 2)
-  const needleBase = polarToXY(needleAngleDeg, 10)
-
-  // Label colour: red if negative, lime if positive/zero
-  const isNeg       = (value ?? 0) < 0
-  const displayVal  = value != null ? `${value > 0 ? '+' : ''}${value.toFixed(1)}%` : '—'
-  const labelColor  = isNeg ? 'var(--color-loss)' : 'var(--accent-lime)'
-
-  // Gradient id — unique per instance via a static key (fine for single use)
-  const gradId = 'gaugeGrad'
+  const isNeg      = (value ?? 0) < 0
+  const displayVal = value != null ? `${value > 0 ? '+' : ''}${value.toFixed(1)}%` : '—'
+  const labelColor = isNeg ? 'var(--color-loss)' : 'var(--accent-lime)'
+  const gradId     = 'gaugeGradFull'
 
   return (
     <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
+      display:        'flex',
+      flexDirection:  'column',
+      alignItems:     'center',
       justifyContent: 'center',
-      width: '100%',
-      height: '100%',
-      minHeight: '90px',
+      width:          '100%',
+      height:         '100%',
+      minHeight:      '90px',
     }}>
       <svg
         width={SIZE}
-        height={SIZE / 2 + 28}
-        viewBox={`0 ${CY - R - STROKE} ${SIZE} ${R + STROKE + 28}`}
+        height={SIZE / 2 + 30}
+        viewBox={`0 ${CY - R - STROKE} ${SIZE} ${R + STROKE + 30}`}
         style={{ overflow: 'visible' }}
       >
         <defs>
-          {/* Red → amber → lime sweep across the arc */}
+          {/* Red (left/loss) → amber (centre) → lime (right/profit) */}
           <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor="var(--gauge-start, #f03e3e)" />
-            <stop offset="50%"  stopColor="var(--gauge-mid,   #f5a623)" />
-            <stop offset="100%" stopColor="var(--gauge-end,   #c8f135)" />
+            <stop offset="0%"   stopColor="#f03e3e" />
+            <stop offset="50%"  stopColor="#f5a623" />
+            <stop offset="100%" stopColor="#c8f135" />
           </linearGradient>
         </defs>
 
-        {/* Track (background arc) */}
+        {/* Dim track underneath for depth */}
         <path
-          d={trackPath}
+          d={fullArc(R)}
           fill="none"
-          stroke="rgba(255,255,255,0.06)"
-          strokeWidth={STROKE}
+          stroke="rgba(255,255,255,0.05)"
+          strokeWidth={STROKE + 2}
           strokeLinecap="round"
         />
 
-        {/* Coloured fill arc */}
-        {fillPath && (
-          <path
-            d={fillPath}
-            fill="none"
-            stroke={`url(#${gradId})`}
-            strokeWidth={STROKE}
-            strokeLinecap="round"
-          />
-        )}
+        {/* Full gradient arc — always fully visible */}
+        <path
+          d={fullArc(R)}
+          fill="none"
+          stroke={`url(#${gradId})`}
+          strokeWidth={STROKE}
+          strokeLinecap="round"
+          opacity="0.85"
+        />
 
-        {/* Needle */}
+        {/* Needle — only this moves */}
         <line
-          x1={needleBase.x}
-          y1={needleBase.y}
+          x1={CX}
+          y1={CY}
           x2={needleTip.x}
           y2={needleTip.y}
           stroke="var(--text-main, #e8e8f0)"
-          strokeWidth={2}
+          strokeWidth={2.5}
           strokeLinecap="round"
         />
-        {/* Needle pivot dot */}
-        <circle cx={CX} cy={CY} r={4} fill="var(--text-main, #e8e8f0)" />
 
-        {/* Centre label */}
+        {/* Pivot dot on top of needle base */}
+        <circle cx={CX} cy={CY} r={4.5} fill="var(--text-main, #e8e8f0)" />
+
+        {/* Value label */}
         <text
           x={CX}
-          y={CY + 18}
+          y={CY + 20}
           textAnchor="middle"
           fontSize="15"
           fontWeight="700"
@@ -133,11 +118,10 @@ export default function ProfitGauge({ value = 0, target = 30 }) {
         </text>
       </svg>
 
-      {/* Sub-label */}
       <span style={{
-        fontSize: '0.7rem',
-        color: 'var(--text-muted)',
-        marginTop: '-2px',
+        fontSize:      '0.7rem',
+        color:         'var(--text-muted)',
+        marginTop:     '-2px',
         letterSpacing: '0.02em',
       }}>
         Target: {target}%

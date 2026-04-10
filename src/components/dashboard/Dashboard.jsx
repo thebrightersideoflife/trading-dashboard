@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import '../../assets/styles/colors.css'
 import '../../assets/styles/dashboard.css'
 import { useTradingData } from '../../hooks/useTradingData'
@@ -25,17 +25,27 @@ const TIME_FILTERS = [
  *   showDemoData  — bool from App state; determines which DB views are queried
  */
 export default function Dashboard({ sessionReady = true, showDemoData: showDemoProp = true }) {
+  const [showModal,    setShowModal]    = useState(false)
+  const [chartFilter,  setChartFilter]  = useState('All')
+  const [equityCutoff, setEquityCutoff] = useState(null)
+
   const {
     metrics, equityCurve, trades, dailyPnl,
     weekTargets, upsertWeekTarget,
     hasMockData, showDemoData,
     loading, error,
     refetch,
-  } = useTradingData(sessionReady, showDemoProp)
+  } = useTradingData(sessionReady, showDemoProp, equityCutoff)
 
-  const [showModal,   setShowModal]   = useState(false)
-  const [chartFilter, setChartFilter] = useState('All')
 
+  // Update cutoff when chart filter changes
+  useEffect(() => {
+    const sel = TIME_FILTERS.find(f => f.label === chartFilter)
+    if (!sel?.months) { setEquityCutoff(null); return }
+    const d = new Date()
+    d.setMonth(d.getMonth() - sel.months)
+    setEquityCutoff(d.toISOString())
+  }, [chartFilter])
 
   // ── Visibility filters ────────────────────────────────────────
 
@@ -45,23 +55,11 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
     [trades, showDemoData]
   )
 
-  // DailyPnl: daily_pnl view has no is_mock column — return [] when demo hidden
-  // to avoid the calendar showing combined mock+real data misleadingly
-  const visibleDailyPnl = showDemoData ? dailyPnl : []
+  // dailyPnl already comes from the correct view (daily_pnl vs daily_pnl_real)
+  // based on showDemoData — hook handles the switching, no client filter needed
+  const visibleDailyPnl = dailyPnl ?? []
 
-  // Equity curve: time-window filter then demo filter
-  const filteredCurve = useMemo(() => {
-    if (!equityCurve?.length) return equityCurve
-    const sel = TIME_FILTERS.find(f => f.label === chartFilter)
-    const cutoff = sel?.months
-      ? (() => { const d = new Date(); d.setMonth(d.getMonth() - sel.months); return d })()
-      : null
-    return equityCurve.filter(pt => {
-      if (cutoff && pt.date && new Date(pt.date) < cutoff) return false
-      if (!showDemoData && pt.is_mock) return false
-      return true
-    })
-  }, [equityCurve, chartFilter, showDemoData])
+  // equityCurve from hook is already filtered by date (DB-level) and demo toggle
 
   // ── Render ────────────────────────────────────────────────────
 
@@ -311,7 +309,7 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
           </div>
 
           <div style={{ flex: 1, width: '100%', marginTop: '10px' }}>
-            <MainChart data={filteredCurve} />
+            <MainChart data={equityCurve} />
           </div>
         </div>
 

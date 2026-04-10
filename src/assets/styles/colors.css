@@ -11,8 +11,8 @@
 
   /* ── Typography ───────────────────────────────────────────────── */
   --text-main:        #e8e8f0;   /* Primary text — slightly cool white */
-  --text-muted:       #727293;   /* Secondary / label text */
-  --text-subtle:      #32323f;   /* Disabled / placeholder */
+  --text-muted:       #8888ad;   /* Secondary / label text */
+  --text-subtle:      #595972;   /* Disabled / placeholder */
 
   /* ── Accent — Lime (positive, CTA, active) ────────────────────── */
   --accent-lime:      #c8f135;   /* Core lime — slightly warmer than pure #bef264 */
@@ -48,6 +48,37 @@
 
   /* ── Base typography ──────────────────────────────────────────── */
   --font-size-base:   16px;   /* +2pt from previous ~14px effective base */
+  
+  /* ── NEW: Accent spectrum (adds depth, not replaces lime) ───────── */
+  --accent-blue:        #4dabf7;
+  --accent-blue-dim:    rgba(77,171,247,0.12);
+
+  --accent-violet:      #9775fa;
+  --accent-violet-dim:  rgba(151,117,250,0.12);
+
+  --accent-amber:       #f59f00;
+  --accent-amber-dim:   rgba(245,159,0,0.12);
+
+  /* ── NEW: Glass / layering ─────────────────────────────────────── */
+  --bg-glass:           rgba(255,255,255,0.02);
+  --bg-glass-strong:    rgba(255,255,255,0.04);
+
+  /* ── NEW: Borders with glow hierarchy ─────────────────────────── */
+  --border-subtle:      rgba(255,255,255,0.04);
+  --border-accent:      rgba(200,241,53,0.35);
+
+  /* ── NEW: Glow effects (modern AI UI signature) ───────────────── */
+  --glow-lime:          0 0 0 1px rgba(200,241,53,0.15), 0 0 24px rgba(200,241,53,0.08);
+  --glow-blue:          0 0 0 1px rgba(77,171,247,0.15), 0 0 24px rgba(77,171,247,0.08);
+
+  /* ── NEW: Elevated shadows ────────────────────────────────────── */
+  --shadow-soft:        0 8px 30px -10px rgba(0,0,0,0.7);
+  --shadow-hover:       0 12px 40px -12px rgba(0,0,0,0.9);
+
+  /* ── NEW: Gradient accents ────────────────────────────────────── */
+  --gradient-accent:    linear-gradient(135deg, #c8f135, #4dabf7);
+  --gradient-subtle:    linear-gradient(180deg, rgba(255,255,255,0.04), transparent);
+
 }
 
 html, body {

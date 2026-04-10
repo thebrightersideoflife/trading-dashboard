@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react';
+import { useJournal } from '../../hooks/useJournal';
+import JournalSidePanel from '../journal/JournalSidePanel';
 import '../../assets/styles/colors.css';
 import '../../assets/styles/dashboard.css';
 import { useTradingData } from '../../hooks/useTradingData';
@@ -14,8 +16,13 @@ const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
  * - Month navigator + summary strip
  * - Inline weekly target override editor
  */
-export default function CalendarPage({ sessionReady, profile }) {
-  const { dailyPnl, weekTargets, upsertWeekTarget } = useTradingData(sessionReady);
+export default function CalendarPage({ sessionReady, profile, showDemoData }) {
+  const { dailyPnl, weekTargets, upsertWeekTarget, trades } = useTradingData(sessionReady, showDemoData);
+
+  const {
+    entries, tradeNotes,
+    upsertEntry, upsertTradeNote, deleteTradeNote, getEntryForDate,
+  } = useJournal(sessionReady);
 
   const today = new Date();
   // Format a local date as 'YYYY-MM-DD' without UTC conversion
@@ -26,8 +33,9 @@ export default function CalendarPage({ sessionReady, profile }) {
   const [viewYear,  setViewYear]  = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
 
-  const [editingWeek, setEditingWeek] = useState(null); // 'YYYY-WW'
-  const [editTarget,  setEditTarget]  = useState('');
+  const [editingWeek,  setEditingWeek]  = useState(null); // 'YYYY-WW'
+  const [editTarget,   setEditTarget]   = useState('');
+  const [selectedDate, setSelectedDate] = useState(null); // 'YYYY-MM-DD'
 
   const defaultWeeklyTarget = profile?.weekly_default_target ?? 500;
 
@@ -141,6 +149,7 @@ export default function CalendarPage({ sessionReady, profile }) {
   };
 
   return (
+    <>
     <div className="dashboard-container">
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Page header */}
@@ -200,14 +209,14 @@ export default function CalendarPage({ sessionReady, profile }) {
         overflow: 'hidden',
       }}>
         {/* Weekday headers */}
-        <div style={{
+        <div className="calendar-header-grid" style={{
           display: 'grid',
           gridTemplateColumns: '1fr repeat(7, 1fr)',
           gap: '6px',
           padding: '14px 16px 6px',
           borderBottom: '1px solid var(--border-color)',
         }}>
-          <div /> {/* week column header */}
+          <div className="calendar-week-col" /> {/* week column header */}
           {WEEKDAYS.map(d => (
             <div key={d} style={{
               textAlign: 'center',
@@ -233,14 +242,14 @@ export default function CalendarPage({ sessionReady, profile }) {
             return (
               <div key={weekKey} style={{ marginBottom: '10px' }}>
                 {/* Day cells row */}
-                <div style={{
+                <div className="calendar-row-grid" style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr repeat(7, 1fr)',
                   gap: '6px',
                   marginBottom: '5px',
                 }}>
                   {/* Weekly target column */}
-                  <div style={{
+                  <div className="calendar-week-col" style={{
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
@@ -291,6 +300,7 @@ export default function CalendarPage({ sessionReady, profile }) {
                     return (
                       <div
                         key={key}
+                        onClick={() => setSelectedDate(key)}
                         style={{
                           aspectRatio: '1',
                           background: cellBg(pnl),
@@ -301,7 +311,7 @@ export default function CalendarPage({ sessionReady, profile }) {
                           padding: '6px 6px 5px',
                           minHeight: '70px',
                           transition: 'transform 0.1s',
-                          cursor: 'default',
+                          cursor: 'pointer',
                           boxSizing: 'border-box',
                           position: 'relative',
                         }}
@@ -329,6 +339,17 @@ export default function CalendarPage({ sessionReady, profile }) {
                               height: '6px',
                               borderRadius: '50%',
                               background: 'var(--accent-lime)',
+                              display: 'inline-block',
+                              flexShrink: 0,
+                            }} />
+                          )}
+                          {/* Journal entry dot */}
+                          {!isToday && getEntryForDate(key) && (
+                            <span title="Journal entry" style={{
+                              width: '5px',
+                              height: '5px',
+                              borderRadius: '50%',
+                              background: '#74c0fc',
                               display: 'inline-block',
                               flexShrink: 0,
                             }} />
@@ -458,6 +479,40 @@ export default function CalendarPage({ sessionReady, profile }) {
       </div>
     </div>
     </div>
+
+      {/* ── Journal side panel ────────────────────────────── */}
+      {selectedDate && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setSelectedDate(null)}
+            style={{
+              position: 'fixed', inset: 0,
+              background: 'rgba(0,0,0,0.45)',
+              zIndex: 399,
+            }}
+          />
+          <JournalSidePanel
+            dateStr={selectedDate}
+            trades={trades ?? []}
+            entries={entries}
+            tradeNotes={tradeNotes}
+            onSaveEntry={upsertEntry}
+            onSaveTradeNote={(tradeId, fields) => upsertTradeNote({ tradeId, ...fields })}
+            onDeleteTradeNote={deleteTradeNote}
+            getEntryForDate={getEntryForDate}
+            onClose={() => setSelectedDate(null)}
+          />
+        </>
+      )}
+    <style>{`
+      @media (max-width: 768px) {
+        .calendar-week-col { display: none !important; }
+        .calendar-header-grid { grid-template-columns: repeat(7, 1fr) !important; padding: 10px 10px 4px !important; }
+        .calendar-row-grid { grid-template-columns: repeat(7, 1fr) !important; }
+      }
+    `}</style>
+    </>
   );
 }
 

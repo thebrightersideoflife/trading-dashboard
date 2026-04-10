@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../api/supabaseClient';
 
@@ -7,13 +7,18 @@ const NAV_TABS = [
   { label: 'Calendar',  path: '/calendar',  available: true },
   { label: 'Trades',    path: '/trades',    available: true },
   { label: 'Analytics', path: '/analytics', available: true },
-  { label: 'Journal',   path: '/journal',   available: false },
+  { label: 'Journal',   path: '/journal',   available: true },
+  { label: 'Help',      path: '/help',      available: true },
 ];
 
 export default function Header({ profile, user}) {
   const navigate = useNavigate();
   const location = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  // Close mobile nav on route change
+  useEffect(() => { setMobileNavOpen(false); }, [location.pathname]);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -39,26 +44,48 @@ export default function Header({ profile, user}) {
       position: 'sticky',
       top: 0,
       zIndex: 100,
-      height: '70px',
       background: 'rgba(10,10,15,0.85)',
       backdropFilter: 'blur(12px)',
       WebkitBackdropFilter: 'blur(12px)',
       borderBottom: '1px solid var(--border-color)',
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 28px',
-      gap: '32px',
     }}>
+      {/* ── Main header row ── */}
+      <div style={{
+        height: '70px',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 28px',
+        gap: '32px',
+      }}>
       {/* Brand */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
         <div style={{ width: '7px', height: '26px', background: 'var(--accent-lime)', borderRadius: '3px' }} />
         <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-0.4px', whiteSpace: 'nowrap' }}>
-          Trading Dashboard
+          CogentLog
         </span>
       </div>
 
-      {/* Nav tabs */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1 }}>
+        {/* Hamburger — mobile only */}
+        <button
+          onClick={() => setMobileNavOpen(o => !o)}
+          aria-label="Toggle navigation"
+          style={{
+            display: 'none',
+            background: 'none', border: 'none',
+            cursor: 'pointer', padding: '6px',
+            color: 'var(--text-main)',
+            flexShrink: 0,
+          }}
+          className="mobile-hamburger"
+        >
+          {mobileNavOpen
+            ? <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4L16 16M16 4L4 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+            : <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+          }
+        </button>
+
+      {/* Nav tabs — hidden on mobile, shown via dropdown */}
+      <nav className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1 }}>
         {NAV_TABS.map((tab) => {
           const isActive = location.pathname === tab.path;
           return (
@@ -217,8 +244,51 @@ export default function Header({ profile, user}) {
         )}
       </div>
 
+      </div>{/* end main header row */}
+
+      {/* ── Mobile nav dropdown ── */}
+      {mobileNavOpen && (
+        <nav style={{
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '8px 16px 16px',
+          borderTop: '1px solid var(--border-color)',
+          gap: '2px',
+          background: 'rgba(10,10,15,0.97)',
+        }}>
+          {NAV_TABS.map(tab => {
+            const isActive = location.pathname === tab.path;
+            return (
+              <button
+                key={tab.path}
+                onClick={() => { if (tab.available) { navigate(tab.path); setMobileNavOpen(false); } }}
+                style={{
+                  padding: '11px 14px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: isActive ? 'var(--bg-card)' : 'transparent',
+                  color: isActive ? 'var(--accent-lime)' : tab.available ? 'var(--text-main)' : 'var(--text-muted)',
+                  fontSize: '15px',
+                  fontWeight: isActive ? '700' : '400',
+                  cursor: tab.available ? 'pointer' : 'not-allowed',
+                  fontFamily: 'inherit',
+                  textAlign: 'left',
+                  borderLeft: isActive ? '3px solid var(--accent-lime)' : '3px solid transparent',
+                }}
+              >
+                {tab.label}{!tab.available ? ' 🚧' : ''}
+              </button>
+            );
+          })}
+        </nav>
+      )}
+
       <style>{`
         .nav-tab-wrapper:hover .coming-soon-tooltip { opacity: 1 !important; }
+        @media (max-width: 768px) {
+          .desktop-nav { display: none !important; }
+          .mobile-hamburger { display: flex !important; }
+        }
       `}</style>
     </header>
   );

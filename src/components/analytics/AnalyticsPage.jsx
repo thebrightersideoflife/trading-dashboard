@@ -71,7 +71,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
       map[dow].trades += 1
       if (t.realized_pnl > 0) map[dow].wins += 1
     }
-    return DAYS.map(d => map[d])
+    return DAYS.map(d => ({ ...map[d], winRate: map[d].trades ? (map[d].wins / map[d].trades) * 100 : 0 }))
   }, [closedTrades])
 
   // ── 4. TIMING: P&L by hour of day ────────────────────────────
@@ -132,7 +132,9 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
       map[key].trades += 1
       if (t.realized_pnl > 0) map[key].wins += 1
     }
-    return Object.values(map).sort((a, b) => a.key.localeCompare(b.key))
+    return Object.values(map)
+      .map(r => ({ ...r, winRate: r.trades ? (r.wins / r.trades) * 100 : 0 }))
+      .sort((a, b) => a.key.localeCompare(b.key))
   }, [closedTrades])
 
   // ── 8. PROGRESS: Drawdown series ─────────────────────────────
@@ -217,7 +219,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
           </div>
 
           {/* Section nav */}
-          <div style={{ display: 'flex', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', padding: '3px', gap: '3px' }}>
+          <div className="analytics-section-nav" style={{ display: 'flex', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', padding: '3px', gap: '3px', flexWrap: 'wrap' }}>
             {SECTIONS.map(s => (
               <button
                 key={s.id}
@@ -254,14 +256,14 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
               subtitle="Which instruments are driving your results"
             >
               {bySymbol.length === 0 ? <EmptyState /> : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'start' }}>
+                <div className="analytics-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'start' }}>
                   <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={bySymbol} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }}>
                       <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--chart-tick)' }} tickFormatter={v => `$${v}`} axisLine={false} tickLine={false} />
                       <YAxis type="category" dataKey="symbol" tick={{ fontSize: 12, fill: 'var(--text-muted)', fontWeight: 600 }} width={70} axisLine={false} tickLine={false} />
                       <Tooltip content={<CustomTooltip />} />
                       <ReferenceLine x={0} stroke="var(--border-color)" />
-                      <Bar dataKey="pnl" radius={[0, 4, 4, 0]} maxBarSize={28}>
+                      <Bar dataKey="pnl" radius={[0, 4, 4, 0]} maxBarSize={28} activeBar={{ stroke: "#000", strokeWidth: 2 }}>
                         {bySymbol.map((entry, i) => (
                           <Cell key={i} fill={entry.pnl >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)'} fillOpacity={0.85} />
                         ))}
@@ -305,7 +307,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
               title="P&L by Side"
               subtitle="Long vs short performance — reveals directional bias"
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <div className="analytics-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                 {bySide.map(r => (
                   <div key={r.side} style={{
                     background: 'var(--bg-main)',
@@ -365,7 +367,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
                   <YAxis tick={{ fontSize: 11, fill: 'var(--chart-tick)' }} tickFormatter={v => `$${v}`} axisLine={false} tickLine={false} width={50} />
                   <Tooltip content={<CustomTooltip />} />
                   <ReferenceLine y={0} stroke="var(--border-color)" />
-                  <Bar dataKey="pnl" radius={[4, 4, 0, 0]} maxBarSize={56}>
+                  <Bar dataKey="pnl" radius={[4, 4, 0, 0]} maxBarSize={56} activeBar={{ stroke: "#000", strokeWidth: 2 }}>
                     {byDow.map((entry, i) => (
                       <Cell key={i} fill={entry.pnl >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)'} fillOpacity={entry.trades === 0 ? 0.15 : 0.85} />
                     ))}
@@ -373,7 +375,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
                 </BarChart>
               </ResponsiveContainer>
               {/* Day summary row */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginTop: '12px' }}>
+              <div className="analytics-grid-7" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginTop: '12px' }}>
                 {byDow.map(d => (
                   <div key={d.day} style={{
                     background: 'var(--bg-main)',
@@ -410,7 +412,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
                       <YAxis tick={{ fontSize: 11, fill: 'var(--chart-tick)' }} tickFormatter={v => `$${v}`} axisLine={false} tickLine={false} width={50} />
                       <Tooltip content={<HourTooltip />} />
                       <ReferenceLine y={0} stroke="var(--border-color)" />
-                      <Bar dataKey="pnl" radius={[3, 3, 0, 0]} maxBarSize={36}>
+                      <Bar dataKey="pnl" radius={[3, 3, 0, 0]} maxBarSize={36} activeBar={{ stroke: "#000", strokeWidth: 2 }}>
                         {byHour.map((entry, i) => (
                           <Cell key={i}
                             fill={entry.pnl >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)'}
@@ -447,7 +449,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
             {/* Win vs Loss ratio cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+            <div className="analytics-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
               {[
                 { label: 'Avg Winning Trade', value: formatCurrency(winLossRatio.avgWin), positive: true },
                 { label: 'Avg Losing Trade',  value: `-${formatCurrency(winLossRatio.avgLoss)}`, positive: false },
@@ -488,7 +490,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
                   <YAxis tick={{ fontSize: 11, fill: 'var(--chart-tick)' }} axisLine={false} tickLine={false} width={32} allowDecimals={false} />
                   <Tooltip content={<HistogramTooltip />} />
                   <ReferenceLine x="$0" stroke="var(--border-color)" />
-                  <Bar dataKey="count" radius={[3, 3, 0, 0]}>
+                  <Bar dataKey="count" radius={[3, 3, 0, 0]} activeBar={{ stroke: "#000", strokeWidth: 2 }}>
                     {histogram.map((entry, i) => (
                       <Cell key={i} fill={entry.isProfit ? 'var(--accent-lime)' : 'var(--color-loss)'} fillOpacity={0.8} />
                     ))}
@@ -503,7 +505,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
             </ChartCard>
 
             {/* Streak cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+            <div className="analytics-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
               {[
                 { label: 'Longest Win Streak',  value: streaks.maxWin,  positive: true  },
                 { label: 'Longest Loss Streak', value: streaks.maxLoss, positive: false },
@@ -548,7 +550,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
                       <YAxis tick={{ fontSize: 11, fill: 'var(--chart-tick)' }} tickFormatter={v => `$${v}`} axisLine={false} tickLine={false} width={56} />
                       <Tooltip content={<CustomTooltip />} />
                       <ReferenceLine y={0} stroke="var(--border-color)" />
-                      <Bar dataKey="pnl" radius={[4, 4, 0, 0]} maxBarSize={64}>
+                      <Bar dataKey="pnl" radius={[4, 4, 0, 0]} maxBarSize={64} activeBar={{ stroke: "#000", strokeWidth: 2 }}>
                         {byMonth.map((entry, i) => (
                           <Cell key={i} fill={entry.pnl >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)'} fillOpacity={0.85} />
                         ))}
@@ -590,7 +592,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
                       <YAxis tick={{ fontSize: 11, fill: 'var(--chart-tick)' }} tickFormatter={v => `${v}%`} axisLine={false} tickLine={false} width={44} />
                       <Tooltip content={<DrawdownTooltip />} />
                       <ReferenceLine y={0} stroke="var(--border-color)" />
-                      <Bar dataKey="drawdown" radius={[0, 0, 3, 3]} maxBarSize={12}>
+                      <Bar dataKey="drawdown" radius={[0, 0, 3, 3]} maxBarSize={12} activeBar={{ stroke: "#000", strokeWidth: 2 }}>
                         {drawdownSeries.map((_, i) => (
                           <Cell key={i} fill="var(--color-loss)" fillOpacity={0.7} />
                         ))}
@@ -613,10 +615,26 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
           </div>
         )}
 
+      <style>{mobileStyles}</style>
       </div>
     </div>
   )
 }
+
+/* ── Mobile CSS ──────────────────────────────────────────────────── */
+const mobileStyles = `
+  @media (max-width: 768px) {
+    .analytics-section-nav button { font-size: 0.78rem !important; padding: 5px 10px !important; }
+    .analytics-grid-2 { grid-template-columns: 1fr !important; }
+    .analytics-grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
+    .analytics-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+    .analytics-grid-7 { grid-template-columns: repeat(4, 1fr) !important; }
+  }
+  @media (max-width: 480px) {
+    .analytics-grid-3 { grid-template-columns: 1fr !important; }
+    .analytics-grid-7 { grid-template-columns: repeat(3, 1fr) !important; }
+  }
+`;
 
 /* ── Shared sub-components ─────────────────────────────────────── */
 
@@ -688,7 +706,7 @@ function CustomTooltip({ active, payload, label }) {
       <div style={{ color: d.pnl >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)', fontWeight: '700' }}>
         P&L: {d.pnl >= 0 ? '+' : ''}{formatCurrency(d.pnl)}
       </div>
-      {d.trades > 0 && <div style={{ color: 'var(--text-muted)', marginTop: '2px' }}>{d.trades} trades · {d.winRate?.toFixed(0)}% win</div>}
+      {d.trades > 0 && <div style={{ color: 'var(--text-muted)', marginTop: '2px' }}>{d.trades} trade{d.trades !== 1 ? 's' : ''}{d.winRate != null ? ` · ${d.winRate.toFixed(0)}% win` : ''}</div>}
     </div>
   )
 }
