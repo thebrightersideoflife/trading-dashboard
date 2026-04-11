@@ -58,11 +58,15 @@ export default function Header({ profile, user}) {
         gap: '32px',
       }}>
       {/* Brand */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-        <div style={{ width: '7px', height: '26px', background: 'var(--accent-lime)', borderRadius: '3px' }} />
-        <span style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-0.4px', whiteSpace: 'nowrap' }}>
-          CogentLog
-        </span>
+      <div
+        style={{ display: 'flex', alignItems: 'center', flexShrink: 0, cursor: 'pointer' }}
+        onClick={() => navigate('/dashboard')}
+      >
+        <img
+          src="/CogentLog_Logo.png"
+          alt="CogentLog"
+          style={{ height: '28px', width: 'auto', display: 'block' }}
+        />
       </div>
 
         {/* Hamburger — mobile only */}

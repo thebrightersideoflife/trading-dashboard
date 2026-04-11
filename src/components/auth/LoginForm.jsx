@@ -9,6 +9,8 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm,  setShowConfirm]  = useState(false);
 
   const handleSubmit = async () => {
     setError('');
@@ -100,27 +102,12 @@ export default function LoginForm() {
       }}>
         {/* Logo / Brand */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '10px',
-            marginBottom: '10px',
-          }}>
-            {/* Lime accent mark */}
-            <div style={{
-              width: '8px',
-              height: '28px',
-              background: 'var(--accent-lime)',
-              borderRadius: '4px',
-            }} />
-            <span style={{
-              fontSize: '22px',
-              fontWeight: '700',
-              color: 'var(--text-main)',
-              letterSpacing: '-0.5px',
-            }}>
-              Trading Dashboard
-            </span>
+          <div style={{ marginBottom: '10px' }}>
+            <img
+              src="/CogentLog_Logo.png"
+              alt="CogentLog"
+              style={{ height: '40px', width: 'auto', display: 'block', margin: '0 auto' }}
+            />
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>
             {mode === 'login' ? 'Sign in to your account' : 'Create a new account'}
@@ -189,16 +176,33 @@ export default function LoginForm() {
               <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: '500', letterSpacing: '0.3px' }}>
                 PASSWORD
               </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={handleKeyDown}
-                style={inputStyle}
-                onFocus={(e) => e.target.style.borderColor = 'var(--accent-lime)'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  style={{ ...inputStyle, paddingRight: '40px' }}
+                  onFocus={(e) => e.target.style.borderColor = 'var(--accent-lime)'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  tabIndex={-1}
+                  style={{
+                    position: 'absolute', right: '12px', top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none', border: 'none',
+                    cursor: 'pointer', padding: '2px',
+                    color: 'var(--text-muted)',
+                    display: 'flex', alignItems: 'center',
+                  }}
+                >
+                  <EyeIcon open={showPassword} />
+                </button>
+              </div>
             </div>
 
             {mode === 'signup' && (
@@ -206,16 +210,33 @@ export default function LoginForm() {
                 <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: '500', letterSpacing: '0.3px' }}>
                   CONFIRM PASSWORD
                 </label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  style={inputStyle}
-                  onFocus={(e) => e.target.style.borderColor = 'var(--accent-lime)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    style={{ ...inputStyle, paddingRight: '40px' }}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--accent-lime)'}
+                    onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(v => !v)}
+                    tabIndex={-1}
+                    style={{
+                      position: 'absolute', right: '12px', top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none', border: 'none',
+                      cursor: 'pointer', padding: '2px',
+                      color: 'var(--text-muted)',
+                      display: 'flex', alignItems: 'center',
+                    }}
+                  >
+                    <EyeIcon open={showConfirm} />
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -276,4 +297,20 @@ export default function LoginForm() {
       </div>
     </div>
   );
+}
+
+/* ── Eye icon for password toggle ──────────────────────────── */
+function EyeIcon({ open }) {
+  return open ? (
+    /* Eye open — password visible */
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+      <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/>
+    </svg>
+  ) : (
+    /* Eye closed — password hidden */
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M2 2l12 12M6.5 6.6A2 2 0 0 0 9.4 9.5M4.2 4.3C2.8 5.3 1.8 6.8 1 8c1.3 2.3 3.8 5 7 5 1.4 0 2.7-.5 3.8-1.3M6.7 3.1C7.1 3 7.6 3 8 3c3.2 0 5.7 2.7 7 5-.5 1-1.2 1.9-2 2.7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+  )
 }

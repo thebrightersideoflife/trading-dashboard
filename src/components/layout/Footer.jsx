@@ -15,11 +15,12 @@ export default function Footer() {
       flexWrap: 'wrap',
       gap: '8px',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <div style={{ width: '5px', height: '18px', background: 'var(--accent-lime)', borderRadius: '2px' }} />
-        <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-0.3px' }}>
-          CogentLog
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <img
+          src="/CogentLog_Logo.png"
+          alt="CogentLog"
+          style={{ height: '20px', width: 'auto', display: 'block', opacity: 0.85 }}
+        />
       </div>
       <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
         © {new Date().getFullYear()} CogentLog. All rights reserved.
