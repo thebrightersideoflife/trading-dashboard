@@ -11,7 +11,8 @@ export default function AddTradeModal({ onClose, onTradeAdded }) {
     exit_price: '',
     quantity: '',
     fees: '',
-    swap: ''
+    swap: '',
+    realized_pnl: '',
   })
   const [loading, setLoading] = useState(false)
 
@@ -23,23 +24,17 @@ export default function AddTradeModal({ onClose, onTradeAdded }) {
     e.preventDefault()
     setLoading(true)
 
-    const realized_pnl =
-      (parseFloat(form.exit_price) - parseFloat(form.entry_price)) *
-        parseFloat(form.quantity) -
-      (parseFloat(form.fees) || 0) -
-      (parseFloat(form.swap) || 0)
-
     const { error } = await supabase.rpc('add_trade', {
-      p_symbol:      form.symbol,
-      p_side:        form.side,
-      p_open_time:   form.open_time,
-      p_close_time:  form.close_time,
-      p_entry_price: Number(form.entry_price),
-      p_exit_price:  Number(form.exit_price),
-      p_quantity:    Number(form.quantity),
-      p_fees:        Number(form.fees)  || 0,
-      p_swap:        Number(form.swap)  || 0,
-      p_realized_pnl: realized_pnl
+      p_symbol:       form.symbol,
+      p_side:         form.side,
+      p_open_time:    form.open_time,
+      p_close_time:   form.close_time,
+      p_entry_price:  Number(form.entry_price),
+      p_exit_price:   Number(form.exit_price),
+      p_quantity:     Number(form.quantity),
+      p_fees:         Number(form.fees)         || 0,
+      p_swap:         Number(form.swap)         || 0,
+      p_realized_pnl: Number(form.realized_pnl) || 0,
     })
 
     if (error) {
@@ -209,6 +204,31 @@ export default function AddTradeModal({ onClose, onTradeAdded }) {
                 style={inputStyle}
               />
             </div>
+          </div>
+
+          {/* Realized P&L — copied directly from broker */}
+          <div style={fieldStyle}>
+            <label style={labelStyle}>
+              Realized P&amp;L
+              <span style={{
+                marginLeft: '6px', fontSize: '0.68rem',
+                color: 'var(--accent-lime)', fontWeight: '600',
+                textTransform: 'none', letterSpacing: 0,
+              }}>
+                Copy from your broker — negative for a loss
+              </span>
+            </label>
+            <input
+              type="number" step="any" name="realized_pnl"
+              placeholder="e.g. 45.20 or -12.50"
+              onChange={handleChange} required
+              style={{
+                ...inputStyle,
+                borderColor: form.realized_pnl
+                  ? (Number(form.realized_pnl) >= 0 ? 'rgba(200,241,53,0.4)' : 'rgba(240,62,62,0.4)')
+                  : 'var(--border-color)',
+              }}
+            />
           </div>
 
           {/* Divider */}
