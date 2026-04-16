@@ -95,8 +95,8 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
         {hasMockData && showDemoData && (
           <div style={{
             marginBottom: '1.5rem',
-            backgroundColor: 'rgba(200, 241, 53, 0.06)',
-            border: '1px solid rgba(200, 241, 53, 0.2)',
+            backgroundColor: 'rgba(37, 211, 102, 0.06)',
+            border: '1px solid rgba(37, 211, 102, 0.2)',
             borderRadius: 'var(--radius-md)',
             padding: '12px 20px',
             display: 'flex',
@@ -291,7 +291,7 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
                         padding: '4px 10px',
                         borderRadius: '5px',
                         border: `1px solid ${active ? 'var(--accent-lime)' : 'var(--border-color)'}`,
-                        background: active ? 'rgba(200,241,53,0.1)' : 'transparent',
+                        background: active ? 'rgba(37, 211, 102,0.1)' : 'transparent',
                         color: active ? 'var(--accent-lime)' : 'var(--text-muted)',
                         fontSize: '0.72rem',
                         fontWeight: active ? '700' : '500',

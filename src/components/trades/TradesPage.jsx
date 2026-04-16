@@ -53,6 +53,49 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
     return { total: visibleTrades.length, closed: closed.length, totalPnl, winRate }
   }, [visibleTrades])
 
+
+  const exportToCSV = () => {
+    const headers = [
+      'Trade ID', 'Symbol', 'Side', 'Open Time', 'Close Time',
+      'Entry Price', 'Exit Price', 'Quantity', 'Fees', 'Swap', 'Realized P&L'
+    ]
+
+    const escape = (val) => {
+      if (val == null) return ''
+      const str = String(val)
+      // Wrap in quotes if contains comma, quote, or newline
+      return str.includes(',') || str.includes('"') || str.includes('\n')
+        ? `"${str.replace(/"/g, '""')}"`
+        : str
+    }
+
+    const rows = visibleTrades.map(t => [
+      t.id,
+      t.symbol,
+      t.side,
+      t.open_time  ? new Date(t.open_time).toLocaleString('en-GB')  : '',
+      t.close_time ? new Date(t.close_time).toLocaleString('en-GB') : '',
+      t.entry_price  ?? '',
+      t.exit_price   ?? '',
+      t.quantity     ?? '',
+      t.fees         ?? '',
+      t.swap         ?? '',
+      t.realized_pnl ?? '',
+    ].map(escape).join(','))
+
+    // \uFEFF = UTF-8 BOM — tells Excel this is UTF-8 and prevents the SYLK
+    // format sniffer from misreading the file (triggered when first cell is "ID")
+    const csv     = '\uFEFF' + [headers.join(','), ...rows].join('\n')
+    const blob    = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url     = URL.createObjectURL(blob)
+    const link    = document.createElement('a')
+    const date    = new Date().toISOString().slice(0, 10)
+    link.href     = url
+    link.download = `cogentlog-trades-${date}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (loading) {
     return (
       <div className="dashboard-container" style={{
@@ -100,21 +143,49 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
               Full trade history · edit and delete inline
             </p>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            style={{
-              backgroundColor: 'var(--accent-lime)',
-              color: '#000',
-              border: 'none',
-              borderRadius: 'var(--radius-sm)',
-              padding: '9px 18px',
-              fontWeight: '700',
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-            }}
-          >
-            + Add Trade
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={exportToCSV}
+              disabled={visibleTrades.length === 0}
+              style={{
+                backgroundColor: 'transparent',
+                color: visibleTrades.length === 0 ? 'var(--text-subtle)' : 'var(--text-muted)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '9px 18px',
+                fontWeight: '600',
+                fontSize: '0.875rem',
+                cursor: visibleTrades.length === 0 ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'border-color 0.15s, color 0.15s',
+              }}
+              onMouseEnter={e => { if (visibleTrades.length > 0) { e.currentTarget.style.borderColor = 'var(--text-muted)'; e.currentTarget.style.color = 'var(--text-main)' }}}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+            >
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <path d="M6.5 1v7M4 6l2.5 2.5L9 6M2 10h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Export CSV
+            </button>
+            <button
+              onClick={() => setShowModal(true)}
+              style={{
+                backgroundColor: 'var(--accent-lime)',
+                color: '#000',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                padding: '9px 18px',
+                fontWeight: '700',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+              }}
+            >
+              + Add Trade
+            </button>
+          </div>
         </header>
 
         {/* ── Summary strip ─────────────────────────────────────────── */}

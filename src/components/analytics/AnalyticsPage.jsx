@@ -311,7 +311,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
                 {bySide.map(r => (
                   <div key={r.side} style={{
                     background: 'var(--bg-main)',
-                    border: `1px solid ${r.side === 'Buy' ? 'rgba(200,241,53,0.2)' : 'rgba(240,62,62,0.2)'}`,
+                    border: `1px solid ${r.side === 'Buy' ? 'rgba(37, 211, 102,0.2)' : 'rgba(240,62,62,0.2)'}`,
                     borderRadius: 'var(--radius-md)',
                     padding: '24px 28px',
                   }}>
@@ -514,7 +514,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
               ].map(({ label, value, positive }) => (
                 <div key={label} style={{
                   background: 'var(--bg-card)',
-                  border: `1px solid ${value > 0 ? (positive ? 'rgba(200,241,53,0.15)' : 'rgba(240,62,62,0.15)') : 'var(--border-color)'}`,
+                  border: `1px solid ${value > 0 ? (positive ? 'rgba(37, 211, 102,0.15)' : 'rgba(240,62,62,0.15)') : 'var(--border-color)'}`,
                   borderRadius: 'var(--radius-md)',
                   padding: '16px 20px',
                 }}>
@@ -669,7 +669,7 @@ function Callout({ label, value, sub, positive }) {
   return (
     <div style={{
       background: 'var(--bg-main)',
-      border: `1px solid ${positive ? 'rgba(200,241,53,0.15)' : 'rgba(240,62,62,0.15)'}`,
+      border: `1px solid ${positive ? 'rgba(37, 211, 102,0.15)' : 'rgba(240,62,62,0.15)'}`,
       borderRadius: '10px',
       padding: '12px 16px',
       flex: 1,

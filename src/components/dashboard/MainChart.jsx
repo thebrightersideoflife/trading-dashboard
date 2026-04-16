@@ -47,7 +47,7 @@ const CustomTooltip = ({ active, payload, label }) => {
           {formatXTick(label)}
         </p>
       )}
-      <p style={{ color: '#c8f135', fontWeight: '700', fontSize: '1rem', margin: 0 }}>
+      <p style={{ color: '#25D366', fontWeight: '700', fontSize: '1rem', margin: 0 }}>
         ${value?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </p>
     </div>
@@ -105,13 +105,13 @@ export default function MainChart({ data }) {
           <Area
             type="monotone"
             dataKey="balance"
-            stroke="#c8f135"
+            stroke="#25D366"
             strokeWidth={2.5}
             fillOpacity={1}
             fill="url(#colorBalance)"
             animationDuration={1200}
             dot={false}
-            activeDot={{ r: 5, fill: '#c8f135', stroke: '#111118', strokeWidth: 2 }}
+            activeDot={{ r: 5, fill: '#25D366', stroke: '#111118', strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>

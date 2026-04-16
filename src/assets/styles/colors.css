@@ -15,17 +15,17 @@
   --text-subtle:      #595972;   /* Disabled / placeholder */
 
   /* ── Accent — Lime (positive, CTA, active) ────────────────────── */
-  --accent-lime:      #c8f135;   /* Core lime — slightly warmer than pure #bef264 */
-  --accent-lime-dim:  rgba(200, 241, 53, 0.12); /* Lime tint for badges/fills */
-  --accent-lime-glow: rgba(200, 241, 53, 0.06); /* Very faint glow */
+  --accent-lime:      #25D366;   /* Core lime — slightly warmer than pure #bef264 */
+  --accent-lime-dim:  rgba(37, 211, 102, 0.12); /* Lime tint for badges/fills */
+  --accent-lime-glow: rgba(37, 211, 102, 0.06); /* Very faint glow */
 
   /* ── Semantic colours ─────────────────────────────────────────── */
-  --color-profit:     #c8f135;   /* Positive PnL */
+  --color-profit:     #25D366;   /* Positive PnL */
   --color-loss:       #f03e3e;   /* Negative PnL */
   --color-loss-dim:   rgba(240, 62, 62, 0.12);
 
   /* ── Chart ────────────────────────────────────────────────────── */
-  --chart-line:       #c8f135;
+  --chart-line:       #25D366;
   --chart-fill-top:   rgba(97, 97, 111, 0.55);   /* Bluish-grey gradient top (user's choice) */
   --chart-fill-bot:   rgba(58, 58, 85, 0);       /* Gradient fades to transparent */
   --chart-grid:       #1a1a24;
@@ -38,7 +38,7 @@
   /* ── Gauge gradient (Profit Target arc) ───────────────────────── */
   --gauge-start:      #f03e3e;   /* Red at bottom-left */
   --gauge-mid:        #f59f00;   /* Amber at top */
-  --gauge-end:        #c8f135;   /* Lime at bottom-right */
+  --gauge-end:        #25D366;   /* Lime at bottom-right */
 
   /* ── Radius / Spacing tokens ──────────────────────────────────── */
   --radius-sm:        8px;
@@ -76,7 +76,7 @@
   --shadow-hover:       0 12px 40px -12px rgba(0,0,0,0.9);
 
   /* ── NEW: Gradient accents ────────────────────────────────────── */
-  --gradient-accent:    linear-gradient(135deg, #c8f135, #4dabf7);
+  --gradient-accent:    linear-gradient(135deg, #25D366, #4dabf7);
   --gradient-subtle:    linear-gradient(180deg, rgba(255,255,255,0.04), transparent);
 
 }
