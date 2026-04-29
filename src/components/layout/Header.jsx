@@ -63,7 +63,7 @@ export default function Header({ profile, user}) {
         onClick={() => navigate('/dashboard')}
       >
         <img
-          src="/CogentLog_Logo.png"
+          src="/CogentLog_Logo_2.png"
           alt="CogentLog"
           style={{ height: '28px', width: 'auto', display: 'block' }}
         />

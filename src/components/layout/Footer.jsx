@@ -17,7 +17,7 @@ export default function Footer() {
     }}>
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <img
-          src="/CogentLog_Logo.png"
+          src="/CogentLog_Logo_2.png"
           alt="CogentLog"
           style={{ height: '20px', width: 'auto', display: 'block', opacity: 0.85 }}
         />

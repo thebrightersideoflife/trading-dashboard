@@ -104,7 +104,7 @@ export default function LoginForm() {
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <div style={{ marginBottom: '10px' }}>
             <img
-              src="/CogentLog_Logo.png"
+              src="/CogentLog_Logo_2.png"
               alt="CogentLog"
               style={{ height: '40px', width: 'auto', display: 'block', margin: '0 auto' }}
             />
