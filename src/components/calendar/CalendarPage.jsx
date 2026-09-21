@@ -118,14 +118,14 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
   function cellBg(pnl) {
     if (pnl == null) return 'transparent';
     const intensity = Math.min(Math.abs(pnl) / maxAbs, 1);
-    if (pnl > 0) return `rgba(37, 211, 102, ${0.06 + intensity * 0.24})`;
-    if (pnl < 0) return `rgba(240, 62, 62,  ${0.06 + intensity * 0.24})`;
+    if (pnl > 0) return `rgba(var(--accent-lime-rgb), ${0.15 + intensity * 0.35})`;
+    if (pnl < 0) return `rgba(var(--color-loss-rgb), ${0.15 + intensity * 0.35})`;
     return 'transparent';
   }
   function cellBorder(pnl) {
     if (pnl == null) return 'var(--border-color)';
-    if (pnl > 0) return 'rgba(37, 211, 102, 0.25)';
-    if (pnl < 0) return 'rgba(240, 62, 62, 0.25)';
+    if (pnl > 0) return 'rgba(var(--accent-lime-rgb), 0.45)';
+    if (pnl < 0) return 'rgba(var(--color-loss-rgb), 0.45)';
     return 'var(--border-color)';
   }
 
@@ -431,7 +431,7 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
                         height: '100%',
                         width: `${Math.abs(progress) * 100}%`,
                         background: weekPnl >= 0
-                          ? (ahead ? 'var(--accent-lime)' : 'rgba(37, 211, 102, 0.5)')
+                          ? (ahead ? 'var(--accent-lime)' : 'rgba(var(--accent-lime-rgb), 0.65)')
                           : 'var(--color-loss)',
                         borderRadius: '2px',
                         transition: 'width 0.3s ease',
@@ -459,8 +459,8 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
           </span>
           <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
             {[
-              { color: 'rgba(37, 211, 102, 0.3)', label: 'Profit day' },
-              { color: 'rgba(240, 62, 62, 0.3)', label: 'Loss day' },
+              { color: 'rgba(var(--accent-lime-rgb), 0.45)', label: 'Profit day' },
+              { color: 'rgba(var(--color-loss-rgb), 0.45)', label: 'Loss day' },
             ].map(({ color, label }) => (
               <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <div style={{ width: '10px', height: '10px', background: color, borderRadius: '2px' }} />

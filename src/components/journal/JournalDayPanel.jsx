@@ -155,7 +155,7 @@ export default function JournalDayPanel({
               disabled={saving}
               style={{
                 padding:'9px 22px',
-                background: saving ? 'rgba(200,241,53,0.5)' : 'var(--accent-lime)',
+                background: saving ? 'rgba(var(--accent-lime-rgb), 0.5)' : 'var(--accent-lime)',
                 border:'none', borderRadius:'7px',
                 color:'#0a0a0f', fontSize:'0.85rem', fontWeight:'700',
                 cursor: saving ? 'not-allowed' : 'pointer', fontFamily:'inherit',
@@ -377,7 +377,7 @@ function TradeNoteCard({ trade, tradeNote, onSave, onDelete }) {
           {/* Action row */}
           <div style={{ display:'flex', alignItems:'center', gap:'8px', marginTop:'8px' }}>
             <button onClick={handleSave} disabled={saving} style={{
-              padding:'7px 16px', background: saving ? 'rgba(200,241,53,0.5)' : 'var(--accent-lime)',
+              padding:'7px 16px', background: saving ? 'rgba(var(--accent-lime-rgb), 0.5)' : 'var(--accent-lime)',
               border:'none', borderRadius:'6px', color:'#0a0a0f',
               fontSize:'0.78rem', fontWeight:'700',
               cursor: saving ? 'not-allowed' : 'pointer', fontFamily:'inherit',

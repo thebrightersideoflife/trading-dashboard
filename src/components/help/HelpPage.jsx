@@ -129,7 +129,7 @@ export default function HelpPage() {
             <div style={{
               position: 'absolute',
               inset: 0,
-              background: 'radial-gradient(circle at 20% 0%, rgba(200,241,53,0.06), transparent 40%)',
+              background: 'radial-gradient(circle at 20% 0%, var(--accent-lime-glow), transparent 40%)',
               pointerEvents: 'none',
             }} />
 
@@ -453,7 +453,7 @@ function Steps({ steps }) {
         <div key={n} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
           <div style={{
             width: '28px', height: '28px', borderRadius: '50%',
-            background: 'var(--accent-lime-dim)', border: '1px solid rgba(200,241,53,0.3)',
+            background: 'var(--accent-lime-dim)', border: '1px solid rgba(var(--accent-lime-rgb), 0.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '0.78rem', fontWeight: '700', color: 'var(--accent-lime)',
             flexShrink: 0, marginTop: '1px',
@@ -483,7 +483,7 @@ function FieldTable({ fields }) {
           <div style={{
             padding: '10px 14px',
             fontSize: '0.82rem', fontWeight: '600', color: 'var(--accent-lime)',
-            background: 'rgba(200,241,53,0.04)',
+            background: 'var(--accent-lime-glow)',
             borderRight: '1px solid var(--border-subtle)',
           }}>
             {name}

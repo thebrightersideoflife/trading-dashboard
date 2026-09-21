@@ -77,15 +77,15 @@ export default function TradeCalendar({ dailyPnl = [] }) {
   function cellBg(pnl) {
     if (pnl == null) return 'transparent'
     const intensity = Math.min(Math.abs(pnl) / maxAbs, 1)
-    if (pnl > 0) return `rgba(37, 211, 102, ${0.07 + intensity * 0.22})`
-    if (pnl < 0) return `rgba(240, 62, 62, ${0.07 + intensity * 0.22})`
+    if (pnl > 0) return `rgba(var(--accent-lime-rgb), ${0.15 + intensity * 0.35})`
+    if (pnl < 0) return `rgba(var(--color-loss-rgb), ${0.15 + intensity * 0.35})`
     return 'transparent'
   }
 
   function cellBorder(pnl) {
     if (pnl == null) return 'var(--border-color)'
-    if (pnl > 0) return 'rgba(37, 211, 102, 0.25)'
-    if (pnl < 0) return 'rgba(240, 62, 62, 0.25)'
+    if (pnl > 0) return 'rgba(var(--accent-lime-rgb), 0.45)'
+    if (pnl < 0) return 'rgba(var(--color-loss-rgb), 0.45)'
     return 'var(--border-color)'
   }
 
@@ -282,8 +282,8 @@ export default function TradeCalendar({ dailyPnl = [] }) {
           alignItems: 'center',
         }}>
           {[
-            { color: 'rgba(37, 211, 102, 0.3)', label: 'Profit day' },
-            { color: 'rgba(240, 62, 62, 0.3)', label: 'Loss day' },
+            { color: 'rgba(var(--accent-lime-rgb), 0.45)', label: 'Profit day' },
+            { color: 'rgba(var(--color-loss-rgb), 0.45)', label: 'Loss day' },
           ].map(({ color, label }) => (
             <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <div style={{ width: '10px', height: '10px', background: color, borderRadius: '2px' }} />

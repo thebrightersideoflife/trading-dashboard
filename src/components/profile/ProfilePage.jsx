@@ -34,11 +34,51 @@ export default function ProfilePage({
     weekly_default_target: profile?.weekly_default_target  ?? 500,
     currency:              profile?.currency               ?? 'USD',
     timezone:              profile?.timezone               ?? 'UTC',
+    theme_color:           profile?.theme_color            ?? '#25D366',
+    preferred_name:        profile?.preferred_name         ?? '',
+    avatar_url:            profile?.avatar_url             ?? '',
   });
   const [saving, setSaving]   = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const [avatarMsg, setAvatarMsg] = useState('');
 
   const set = (key, val) => setValues(v => ({ ...v, [key]: val }));
+
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setAvatarMsg('Please select an image file.');
+      setTimeout(() => setAvatarMsg(''), 3000);
+      return;
+    }
+
+    setSaving(true);
+    setAvatarMsg('Uploading...');
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
+      const filePath = fileName;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      set('avatar_url', publicUrl);
+      setAvatarMsg('Upload successful!');
+      setTimeout(() => setAvatarMsg(''), 2500);
+    } catch (err) {
+      setAvatarMsg(`Upload failed: ${err.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -50,6 +90,9 @@ export default function ProfilePage({
         weekly_default_target: Number(values.weekly_default_target),
         currency:              values.currency,
         timezone:              values.timezone,
+        theme_color:           values.theme_color,
+        preferred_name:        values.preferred_name,
+        avatar_url:            values.avatar_url,
       };
       const { data, error } = await supabase
         .from('profiles')
@@ -83,111 +126,363 @@ export default function ProfilePage({
         </p>
       </div>
 
-      {/* ── Section: Account ───────────────────────────────────── */}
-      <Section title="Account" subtitle="Your trading account parameters">
-        <Field label="Initial Balance" hint="Starting balance used to compute returns">
-          <NumberInput
-            value={values.initial_balance}
-            onChange={v => set('initial_balance', v)}
-            prefix="$"
-            min={0}
-          />
-        </Field>
-        <Field label="Currency" hint="Display currency for all P&L figures">
-          <SelectInput
-            value={values.currency}
-            onChange={v => set('currency', v)}
-            options={CURRENCIES}
-          />
-        </Field>
-        <Field label="Timezone" hint="Used to bucket trades into trading days">
-          <SelectInput
-            value={values.timezone}
-            onChange={v => set('timezone', v)}
-            options={TIMEZONES}
-          />
-        </Field>
-      </Section>
+      {/* ── Top Primary Segment: Identity & Appearance ── */}
+      <div style={{ marginBottom: '2rem' }}>
+        <Section title="Profile Identity & Theme" subtitle="Your preferred personal presence and workspace appearance">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', padding: '10px 0' }} className="profile-layout-grid">
+            <div>
+              <Field label="Preferred Name" hint="What name should we call you across the workspace?">
+                <input
+                  type="text"
+                  value={values.preferred_name}
+                  onChange={e => set('preferred_name', e.target.value)}
+                  placeholder="e.g. John"
+                  style={{
+                    width: '100%',
+                    background: 'var(--bg-main)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '7px',
+                    color: 'var(--text-main)',
+                    fontSize: '15px',
+                    padding: '9px 12px',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={e => e.target.style.borderColor = 'var(--accent-lime)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border-color)'}
+                />
+              </Field>
 
-      {/* ── Section: Targets ────────────────────────────────────── */}
-      <Section title="Targets" subtitle="Goal thresholds shown on the dashboard and calendar">
-        <Field label="Profit Target" hint="% gain from initial balance — shown on the dashboard gauge">
-          <NumberInput
-            value={values.profit_target}
-            onChange={v => set('profit_target', v)}
-            suffix="%"
-            min={1}
-            max={1000}
-          />
-        </Field>
-        <Field label="Weekly Default Target" hint="Default P&L target per week on the calendar. Can be overridden per-week.">
-          <NumberInput
-            value={values.weekly_default_target}
-            onChange={v => set('weekly_default_target', v)}
-            prefix="$"
-            min={0}
-          />
-        </Field>
-      </Section>
+              <div
+                style={{
+                  padding: '20px 24px',
+                  border: isDragging ? '1px dashed var(--accent-lime)' : '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  background: isDragging ? 'var(--accent-lime-dim)' : 'rgba(255, 255, 255, 0.01)',
+                  margin: '8px 20px 20px 20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '24px',
+                  transition: 'all 0.2s ease',
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  const file = e.dataTransfer.files?.[0];
+                  handleFileUpload(file);
+                }}
+              >
+                {/* Avatar Circle Container */}
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    background: 'var(--bg-main)',
+                    border: '2px solid var(--border-color)',
+                    boxShadow: 'var(--card-shadow)',
+                    flexShrink: 0,
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => document.getElementById('avatar-file-input')?.click()}
+                  onMouseEnter={e => {
+                    const overlay = e.currentTarget.querySelector('.avatar-overlay');
+                    if (overlay) overlay.style.opacity = '1';
+                  }}
+                  onMouseLeave={e => {
+                    const overlay = e.currentTarget.querySelector('.avatar-overlay');
+                    if (overlay) overlay.style.opacity = '0';
+                  }}
+                >
+                  {values.avatar_url ? (
+                    <img
+                      src={values.avatar_url}
+                      alt="Avatar"
+                      onError={e => { e.target.src = ''; }}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', fontWeight: '700', color: 'var(--text-muted)', background: 'var(--border-color)' }}>
+                      {values.preferred_name ? values.preferred_name[0].toUpperCase() : '?'}
+                    </div>
+                  )}
 
-      {/* ── Section: Demo Data ───────────────────────────────────── */}
-      <Section title="Demo Data" subtitle="Control visibility of the sample data loaded on first sign-in">
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '16px',
-          background: 'var(--bg-main)',
-          borderRadius: '8px',
-          border: '1px solid var(--border-color)',
-        }}>
-          <div>
-            <div style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)' }}>
-              Show demo trades
+                  {/* Hover Overlay */}
+                  <div
+                    className="avatar-overlay"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      background: 'rgba(0, 0, 0, 0.6)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: 0,
+                      transition: 'opacity 0.15s ease',
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#ffffff' }}>
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Content Details & Action Controls */}
+                <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)' }}>
+                    Profile Picture
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                    Drag & drop an image here or click the avatar to browse.
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <label
+                      style={{
+                        padding: '7px 14px',
+                        background: 'var(--bg-main)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '6px',
+                        color: 'var(--text-main)',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.12s',
+                        textAlign: 'center',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-lime)'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
+                    >
+                      Choose Image
+                      <input
+                        id="avatar-file-input"
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          handleFileUpload(file);
+                        }}
+                      />
+                    </label>
+
+                    {values.avatar_url && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          set('avatar_url', '');
+                          setAvatarMsg('Image removed. Click Save below to confirm.');
+                          setTimeout(() => setAvatarMsg(''), 4000);
+                        }}
+                        style={{
+                          padding: '7px 14px',
+                          background: 'transparent',
+                          border: '1px solid transparent',
+                          borderRadius: '6px',
+                          color: 'var(--color-loss)',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.12s',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--color-loss-dim)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        Remove
+                      </button>
+                    )}
+
+                    {avatarMsg && (
+                      <span style={{
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        color: avatarMsg.includes('failed') || avatarMsg.includes('Please') ? 'var(--color-loss)' : avatarMsg.includes('successful') ? 'var(--accent-lime)' : 'var(--text-muted)'
+                      }}>
+                        {avatarMsg}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '3px' }}>
-              {showDemoData
-                ? 'Demo data is visible across the dashboard and calendar.'
-                : 'Demo data is hidden. Only your real trades are shown.'}
+
+            <div>
+              <Field label="Accent Theme Color" hint="Primary accent color used for positive gains, buttons, and highlights">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', justifyContent: 'flex-end' }}>
+                  <input
+                    type="color"
+                    value={values.theme_color}
+                    onChange={e => set('theme_color', e.target.value)}
+                    style={{
+                      width: '40px',
+                      height: '36px',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '6px',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  />
+                  <input
+                    type="text"
+                    value={values.theme_color.toUpperCase()}
+                    onChange={e => set('theme_color', e.target.value)}
+                    placeholder="#25D366"
+                    maxLength={7}
+                    style={{
+                      width: '100px',
+                      background: 'var(--bg-main)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '7px',
+                      color: 'var(--text-main)',
+                      fontSize: '14px',
+                      padding: '8px 10px',
+                      outline: 'none',
+                      fontFamily: 'monospace',
+                      textAlign: 'center',
+                    }}
+                    onFocus={e => e.target.style.borderColor = 'var(--accent-lime)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border-color)'}
+                  />
+                </div>
+              </Field>
             </div>
           </div>
-          {/* Toggle — calls hook's toggleDemoData which persists to Postgres */}
-          <button
-            onClick={onToggleDemoData}
-            style={{
-              width: '44px',
-              height: '24px',
-              borderRadius: '12px',
-              background: showDemoData ? 'var(--accent-lime)' : 'var(--border-color)',
-              border: 'none',
-              cursor: 'pointer',
-              position: 'relative',
-              transition: 'background 0.2s',
-              flexShrink: 0,
-            }}
-          >
-            <span style={{
-              position: 'absolute',
-              top: '3px',
-              left: showDemoData ? '22px' : '3px',
-              width: '18px',
-              height: '18px',
-              borderRadius: '50%',
-              background: showDemoData ? '#0a0a0f' : '#555',
-              transition: 'left 0.2s',
-            }} />
-          </button>
+        </Section>
+      </div>
+
+      {/* ── Bottom Secondary Segment: Configuration Grid ── */}
+      <div className="profile-layout-grid" style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '2rem',
+        alignItems: 'start',
+        width: '100%',
+      }}>
+        {/* Left Column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          {/* ── Section: Account ───────────────────────────────────── */}
+          <Section title="Account Parameters" subtitle="Your primary trading account variables">
+            <Field label="Initial Balance" hint="Starting balance used to compute returns">
+              <NumberInput
+                value={values.initial_balance}
+                onChange={v => set('initial_balance', v)}
+                prefix="$"
+                min={0}
+              />
+            </Field>
+            <Field label="Currency" hint="Display currency for all P&L figures">
+              <SelectInput
+                value={values.currency}
+                onChange={v => set('currency', v)}
+                options={CURRENCIES}
+              />
+            </Field>
+            <Field label="Timezone" hint="Used to bucket trades into trading days">
+              <SelectInput
+                value={values.timezone}
+                onChange={v => set('timezone', v)}
+                options={TIMEZONES}
+              />
+            </Field>
+          </Section>
         </div>
-      </Section>
+
+        {/* Right Column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          {/* ── Section: Targets ────────────────────────────────────── */}
+          <Section title="Targets & Goals" subtitle="Goal thresholds shown on the dashboard and calendar">
+            <Field label="Profit Target" hint="% gain from initial balance — shown on the dashboard gauge">
+              <NumberInput
+                value={values.profit_target}
+                onChange={v => set('profit_target', v)}
+                suffix="%"
+                min={1}
+                max={1000}
+              />
+            </Field>
+            <Field label="Weekly Default Target" hint="Default P&L target per week on the calendar. Can be overridden per-week.">
+              <NumberInput
+                value={values.weekly_default_target}
+                onChange={v => set('weekly_default_target', v)}
+                prefix="$"
+                min={0}
+              />
+            </Field>
+          </Section>
+
+          {/* ── Section: Demo Data ───────────────────────────────────── */}
+          <Section title="Demo Data" subtitle="Control visibility of the sample data loaded on first sign-in">
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '16px',
+              background: 'var(--bg-main)',
+              borderRadius: '8px',
+              border: '1px solid var(--border-color)',
+            }}>
+              <div>
+                <div style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)' }}>
+                  Show demo trades
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '3px' }}>
+                  {showDemoData
+                    ? 'Demo data is visible across the dashboard and calendar.'
+                    : 'Demo data is hidden. Only your real trades are shown.'}
+                </div>
+              </div>
+              {/* Toggle — calls hook's toggleDemoData which persists to Postgres */}
+              <button
+                onClick={onToggleDemoData}
+                style={{
+                  width: '44px',
+                  height: '24px',
+                  borderRadius: '12px',
+                  background: showDemoData ? 'var(--accent-lime)' : 'var(--border-color)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  transition: 'background 0.2s',
+                  flexShrink: 0,
+                }}
+              >
+                <span style={{
+                  position: 'absolute',
+                  top: '3px',
+                  left: showDemoData ? '22px' : '3px',
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  background: showDemoData ? '#0a0a0f' : '#555',
+                  transition: 'left 0.2s',
+                }} />
+              </button>
+            </div>
+          </Section>
+        </div>
+      </div>
 
       {/* ── Save bar ─────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '2rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '2.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
         <button
           onClick={handleSave}
           disabled={saving}
           style={{
             padding: '11px 28px',
-            background: saving ? 'rgba(200,241,53,0.5)' : 'var(--accent-lime)',
+            background: saving ? 'rgba(var(--accent-lime-rgb), 0.5)' : 'var(--accent-lime)',
             border: 'none',
             borderRadius: '8px',
             color: '#0a0a0f',

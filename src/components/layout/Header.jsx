@@ -172,8 +172,8 @@ export default function Header({ profile, user}) {
             width: '38px',
             height: '38px',
             borderRadius: '50%',
-            background: 'var(--accent-lime)',
-            border: 'none',
+            background: profile?.avatar_url ? 'transparent' : (profile?.theme_color || 'var(--accent-lime)'),
+            border: profile?.avatar_url ? '1px solid var(--border-color)' : 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -181,9 +181,22 @@ export default function Header({ profile, user}) {
             fontSize: '15px',
             fontWeight: '700',
             color: '#0a0a0f',
+            overflow: 'hidden',
+            padding: 0,
           }}
         >
-          {userInitial}
+          {profile?.avatar_url ? (
+            <img
+              src={profile.avatar_url}
+              alt="Avatar"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={e => {
+                e.target.style.display = 'none';
+                e.currentTarget.parentElement.style.background = profile?.theme_color || 'var(--accent-lime)';
+                e.currentTarget.parentElement.innerText = userInitial;
+              }}
+            />
+          ) : userInitial}
         </button>
 
         {profileOpen && (
@@ -209,11 +222,25 @@ export default function Header({ profile, user}) {
             }}>
               <div style={{
                 width: '34px', height: '34px', borderRadius: '50%',
-                background: 'var(--accent-lime)', display: 'flex',
+                background: profile?.avatar_url ? 'transparent' : (profile?.theme_color || 'var(--accent-lime)'),
+                border: profile?.avatar_url ? '1px solid var(--border-color)' : 'none',
+                display: 'flex',
                 alignItems: 'center', justifyContent: 'center',
-                fontSize: '15px', fontWeight: '700', color: '#0a0a0f', flexShrink: 0,
+                fontSize: '14px', fontWeight: '700', color: '#0a0a0f', flexShrink: 0,
+                overflow: 'hidden',
               }}>
-                {userInitial}
+                {profile?.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt="Avatar"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={e => {
+                      e.target.style.display = 'none';
+                      e.currentTarget.parentElement.style.background = profile?.theme_color || 'var(--accent-lime)';
+                      e.currentTarget.parentElement.innerText = userInitial;
+                    }}
+                  />
+                ) : userInitial}
               </div>
               <div style={{ overflow: 'hidden' }}>
                 <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

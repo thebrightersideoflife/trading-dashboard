@@ -256,7 +256,7 @@ export default function TradeTable({ trades = [], onTradeChanged }) {
                   <tr
                     style={{
                       transition: 'background 0.12s',
-                      background: isEditing ? 'rgba(200,241,53,0.04)' : 'transparent',
+                      background: isEditing ? 'var(--accent-lime-glow)' : 'transparent',
                     }}
                     onMouseEnter={e => { if (!isEditing) e.currentTarget.style.background = 'var(--bg-card-hover)' }}
                     onMouseLeave={e => { if (!isEditing) e.currentTarget.style.background = 'transparent' }}
@@ -508,7 +508,7 @@ function PagBtn({ children, onClick, disabled, active }) {
         border: '1px solid',
         borderColor: active ? 'var(--accent-lime)' : 'var(--border-color)',
         borderRadius: '5px',
-        background: active ? 'rgba(200,241,53,0.1)' : 'transparent',
+        background: active ? 'rgba(var(--accent-lime-rgb), 0.16)' : 'transparent',
         color: active ? 'var(--accent-lime)' : disabled ? 'var(--text-subtle, #2a2a3a)' : 'var(--text-muted)',
         cursor: disabled ? 'not-allowed' : 'pointer',
         transition: 'all 0.12s',

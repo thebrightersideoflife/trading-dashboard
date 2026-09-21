@@ -21,7 +21,7 @@ export function useTradingData(sessionReady = true, showDemoProp = null, equityC
       // ── 1. Fetch profile first to know which view pair to use ──
       const { data: profileData, error: profileErr } = await supabase
         .from('profiles')
-        .select('initial_balance, profit_target, weekly_default_target, currency, timezone, show_demo_data')
+        .select('initial_balance, profit_target, weekly_default_target, currency, timezone, show_demo_data, theme_color')
         .maybeSingle()
       if (profileErr) throw profileErr
 
@@ -130,6 +130,7 @@ export function useTradingData(sessionReady = true, showDemoProp = null, equityC
         avg_duration_sec:      avgDurationSec,
         currency:              profileData?.currency            ?? 'USD',
         weekly_default_target: weeklyDefaultTarget,
+        theme_color:           profileData?.theme_color         ?? '#25D366',
       })
 
       // ── 5. Equity curve — offset by initial balance ────────────

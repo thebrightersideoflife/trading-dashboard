@@ -4,6 +4,7 @@ import { supabase } from '../../api/supabaseClient';
 export default function LoginForm() {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [email, setEmail] = useState('');
+  const [preferredName, setPreferredName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,6 +23,10 @@ export default function LoginForm() {
     }
 
     if (mode === 'signup') {
+      if (!preferredName) {
+        setError('Please enter your preferred name.');
+        return;
+      }
       if (password !== confirmPassword) {
         setError('Passwords do not match.');
         return;
@@ -39,10 +44,19 @@ export default function LoginForm() {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
       } else {
-        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              preferred_name: preferredName
+            }
+          }
+        });
         if (signUpError) throw signUpError;
         setSuccessMsg('Account created! Check your email to confirm your address, then log in.');
         setMode('login');
+        setPreferredName('');
         setPassword('');
         setConfirmPassword('');
       }
@@ -89,7 +103,7 @@ export default function LoginForm() {
         transform: 'translate(-50%, -50%)',
         width: '600px',
         height: '600px',
-        background: 'radial-gradient(circle, rgba(200,241,53,0.04) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(var(--accent-lime-rgb), 0.04) 0%, transparent 70%)',
         pointerEvents: 'none',
         zIndex: 0,
       }} />
@@ -156,6 +170,24 @@ export default function LoginForm() {
 
           {/* Fields */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {mode === 'signup' && (
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: '500', letterSpacing: '0.3px' }}>
+                  PREFERRED NAME
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. John"
+                  value={preferredName}
+                  onChange={(e) => setPreferredName(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  style={inputStyle}
+                  onFocus={(e) => e.target.style.borderColor = 'var(--accent-lime)'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                />
+              </div>
+            )}
+
             <div>
               <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: '500', letterSpacing: '0.3px' }}>
                 EMAIL
@@ -259,8 +291,8 @@ export default function LoginForm() {
             <div style={{
               marginTop: '16px',
               padding: '10px 14px',
-              background: 'rgba(200,241,53,0.08)',
-              border: '1px solid rgba(200,241,53,0.2)',
+              background: 'var(--accent-lime-glow)',
+              border: '1px solid rgba(var(--accent-lime-rgb), 0.3)',
               borderRadius: 'var(--radius-sm)',
               color: 'var(--accent-lime)',
               fontSize: '13px',
@@ -277,7 +309,7 @@ export default function LoginForm() {
               width: '100%',
               marginTop: '24px',
               padding: '12px',
-              background: loading ? 'rgba(200,241,53,0.5)' : 'var(--accent-lime)',
+              background: loading ? 'rgba(var(--accent-lime-rgb), 0.5)' : 'var(--accent-lime)',
               border: 'none',
               borderRadius: 'var(--radius-sm)',
               color: '#0a0a0f',

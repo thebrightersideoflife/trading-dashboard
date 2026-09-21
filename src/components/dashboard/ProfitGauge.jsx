@@ -64,9 +64,9 @@ export default function ProfitGauge({ value = 0, target = 30 }) {
         <defs>
           {/* Red (left/loss) → amber (centre) → lime (right/profit) */}
           <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor="#f03e3e" />
-            <stop offset="50%"  stopColor="#f5d923" />
-            <stop offset="100%" stopColor="#25D366" />
+            <stop offset="0%"   stopColor="var(--color-loss)" />
+            <stop offset="50%"  stopColor="var(--accent-amber)" />
+            <stop offset="100%" stopColor="var(--color-profit)" />
           </linearGradient>
         </defs>
 

@@ -86,6 +86,23 @@ export default function App() {
         if (!data) return;
         setProfile(data);
         setShowDemoData(data.show_demo_data ?? true);
+
+        // Inject dynamic theme color CSS variable globally into the document root
+        if (data.theme_color) {
+          document.documentElement.style.setProperty('--accent-lime', data.theme_color);
+
+          // Compute secondary variations if hex matches basic pattern to update related glows/dim rings
+          if (/^#[0-9A-F]{6}$/i.test(data.theme_color)) {
+            const r = parseInt(data.theme_color.slice(1, 3), 16);
+            const g = parseInt(data.theme_color.slice(3, 5), 16);
+            const b = parseInt(data.theme_color.slice(5, 7), 16);
+            document.documentElement.style.setProperty('--accent-lime-rgb', `${r}, ${g}, ${b}`);
+            document.documentElement.style.setProperty('--accent-lime-glow', `rgba(${r}, ${g}, ${b}, 0.08)`);
+            document.documentElement.style.setProperty('--accent-lime-dim', `rgba(${r}, ${g}, ${b}, 0.16)`);
+            document.documentElement.style.setProperty('--color-profit', data.theme_color);
+            document.documentElement.style.setProperty('--chart-line', data.theme_color);
+          }
+        }
       });
   }, [user]);
 
@@ -93,6 +110,20 @@ export default function App() {
     if (!updated) return;
     setProfile(updated);
     if (updated.show_demo_data != null) setShowDemoData(updated.show_demo_data);
+
+    if (updated.theme_color) {
+      document.documentElement.style.setProperty('--accent-lime', updated.theme_color);
+      if (/^#[0-9A-F]{6}$/i.test(updated.theme_color)) {
+        const r = parseInt(updated.theme_color.slice(1, 3), 16);
+        const g = parseInt(updated.theme_color.slice(3, 5), 16);
+        const b = parseInt(updated.theme_color.slice(5, 7), 16);
+        document.documentElement.style.setProperty('--accent-lime-rgb', `${r}, ${g}, ${b}`);
+        document.documentElement.style.setProperty('--accent-lime-glow', `rgba(${r}, ${g}, ${b}, 0.08)`);
+        document.documentElement.style.setProperty('--accent-lime-dim', `rgba(${r}, ${g}, ${b}, 0.16)`);
+        document.documentElement.style.setProperty('--color-profit', updated.theme_color);
+        document.documentElement.style.setProperty('--chart-line', updated.theme_color);
+      }
+    }
   }, []);
 
   // Toggle — App-level so it works on any route without Dashboard being mounted
@@ -122,9 +153,21 @@ export default function App() {
     </AppLayout>
   );
 
+  const themeColor = profile?.theme_color || '#25D366';
+  const cleanHex = themeColor.replace('#', '');
+  const rChan = parseInt(cleanHex.substring(0, 2), 16) || 37;
+  const gChan = parseInt(cleanHex.substring(2, 4), 16) || 211;
+  const bChan = parseInt(cleanHex.substring(4, 6), 16) || 102;
+  const rgbChannels = `${rChan}, ${gChan}, ${bChan}`;
+
   return (
-    <BrowserRouter>
-      <Routes>
+    <div style={{
+      '--accent-lime': themeColor,
+      '--accent-lime-rgb': rgbChannels,
+      minHeight: '100vh',
+    }}>
+      <BrowserRouter>
+        <Routes>
 
         <Route
           path="/login"
@@ -231,5 +274,6 @@ export default function App() {
 
       </Routes>
     </BrowserRouter>
+    </div>
   );
 }

@@ -34,19 +34,19 @@ export const OUTCOME_TAGS = [
 ]
 
 export const MOOD_LABELS = {
-  1: { label: 'Poor',      color: '#f03e3e' },
-  2: { label: 'Below avg', color: '#f59f00' },
-  3: { label: 'Neutral',   color: '#52526a' },
-  4: { label: 'Good',      color: '#74c0fc' },
-  5: { label: 'Great',     color: '#25D366' },
+  1: { label: 'Poor',      color: 'var(--color-loss)' },
+  2: { label: 'Below avg', color: 'var(--accent-amber)' },
+  3: { label: 'Neutral',   color: 'var(--text-subtle)' },
+  4: { label: 'Good',      color: 'var(--accent-blue)' },
+  5: { label: 'Great',     color: 'var(--color-profit)' },
 }
 
 export const CONFIDENCE_LABELS = {
-  1: { label: 'Very low',  color: '#f03e3e' },
-  2: { label: 'Low',       color: '#f59f00' },
-  3: { label: 'Moderate',  color: '#52526a' },
-  4: { label: 'High',      color: '#74c0fc' },
-  5: { label: 'Very high', color: '#25D366' },
+  1: { label: 'Very low',  color: 'var(--color-loss)' },
+  2: { label: 'Low',       color: 'var(--accent-amber)' },
+  3: { label: 'Moderate',  color: 'var(--text-subtle)' },
+  4: { label: 'High',      color: 'var(--accent-blue)' },
+  5: { label: 'Very high', color: 'var(--color-profit)' },
 }
 
 // Returns today's date as 'YYYY-MM-DD' in local time

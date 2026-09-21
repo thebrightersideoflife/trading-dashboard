@@ -225,7 +225,7 @@ export default function AddTradeModal({ onClose, onTradeAdded }) {
               style={{
                 ...inputStyle,
                 borderColor: form.realized_pnl
-                  ? (Number(form.realized_pnl) >= 0 ? 'rgba(200,241,53,0.4)' : 'rgba(240,62,62,0.4)')
+                  ? (Number(form.realized_pnl) >= 0 ? 'rgba(var(--accent-lime-rgb), 0.55)' : 'rgba(var(--color-loss-rgb), 0.55)')
                   : 'var(--border-color)',
               }}
             />
