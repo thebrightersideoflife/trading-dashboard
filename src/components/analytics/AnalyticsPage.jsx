@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import '../../assets/styles/colors.css'
 import '../../assets/styles/dashboard.css'
 import { useTradingData } from '../../hooks/useTradingData'
@@ -17,8 +18,19 @@ import {
  */
 export default function AnalyticsPage({ sessionReady = true, showDemoData: showDemoProp = true }) {
   const { trades, showDemoData, loading, error } = useTradingData(sessionReady, showDemoProp)
+  const location = useLocation()
 
   const [activeSection, setActiveSection] = useState('edge') // edge | timing | risk | progress
+
+  // Listen for hash tab navigation parameters
+  useEffect(() => {
+    if (location.hash) {
+      const tab = location.hash.replace('#', '');
+      if (['edge', 'timing', 'risk', 'progress'].includes(tab)) {
+        setActiveSection(tab);
+      }
+    }
+  }, [location.hash]);
 
   // ── Base: closed trades only, respecting demo toggle ──────────
   const closedTrades = useMemo(() => {

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../api/supabaseClient';
+import { TrendingUp, Trophy, BarChart3, Clock, Calendar } from 'lucide-react';
 
 const NAV_TABS = [
   { label: 'Dashboard', path: '/dashboard', available: true },
@@ -17,9 +18,121 @@ export default function Header({ profile, user}) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  // Close mobile nav on route change
-  useEffect(() => { setMobileNavOpen(false); }, [location.pathname]);
   const dropdownRef = useRef(null);
+
+  // Analytics insights cycling state
+  const [insights, setInsights] = useState([]);
+  const [insightIndex, setInsightIndex] = useState(0);
+  const [fade, setFade] = useState(true);
+
+  // Fetch light database metrics on mount or location view shifts
+  useEffect(() => {
+    if (!user) return;
+    const fetchHeaderMetrics = async () => {
+      try {
+        const isDemo = profile?.show_demo_data ?? true;
+        const targetView = isDemo ? 'dashboard_metrics' : 'dashboard_metrics_real';
+        const { data } = await supabase.from(targetView).select('*').maybeSingle();
+
+        const list = [];
+        // 1. Personal Greeting
+        const displayName = profile?.preferred_name?.trim() || user?.email?.split('@')[0];
+        list.push({ type: 'greeting', text: `👋 Hi, ${displayName}` });
+
+        if (data) {
+          // 2. Win Rate
+          if (data.win_rate != null) {
+            list.push({ type: 'winRate', text: `Win Rate: ${Number(data.win_rate).toFixed(1)}%` });
+          }
+          // 3. Best Trade
+          if (data.best_trade != null) {
+            const currencySymbol = profile?.currency === 'EUR' ? '€' : profile?.currency === 'GBP' ? '£' : '$';
+            list.push({ type: 'bestTrade', text: `Best Trade: +${currencySymbol}${Number(data.best_trade).toLocaleString()}` });
+          }
+          // 4. Total Trades Count
+          if (data.total_trades) {
+            list.push({ type: 'execution', text: `Execution: ${data.total_trades} Trades Logged` });
+          }
+        }
+
+        // ── 5. Fetch all trades to derive Timing Edge Analysis (Best/Worst hours & days) ──
+        const baseTradesView = isDemo ? 'trades' : 'trades'; // table source
+        let { data: rawTrades } = await supabase
+          .from(baseTradesView)
+          .select('close_time, realized_pnl, is_mock')
+          .not('close_time', 'is', null)
+          .not('realized_pnl', 'is', null);
+
+        if (!isDemo && rawTrades) {
+          rawTrades = rawTrades.filter(t => !t.is_mock);
+        }
+
+        if (rawTrades && rawTrades.length > 0) {
+          // Compute Day of Week edge
+          const DAYS_LOOKUP = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          const dowMap = {};
+          // Compute Hour edge
+          const hourMap = {};
+
+          rawTrades.forEach(t => {
+            const dateObj = new Date(t.close_time);
+            const pnl = Number(t.realized_pnl);
+
+            const dayName = DAYS_LOOKUP[dateObj.getDay()];
+            if (!dowMap[dayName]) dowMap[dayName] = 0;
+            dowMap[dayName] += pnl;
+
+            const hourNum = dateObj.getHours();
+            if (!hourMap[hourNum]) hourMap[hourNum] = 0;
+            hourMap[hourNum] += pnl;
+          });
+
+          // Derive best/worst items
+          const dowEntries = Object.entries(dowMap);
+          if (dowEntries.length > 0) {
+            const sortedDays = [...dowEntries].sort((a, b) => b[1] - a[1]);
+            list.push({ type: 'bestDay', text: `Best Day: ${sortedDays[0][0]}` });
+            if (sortedDays.length > 1 && sortedDays[sortedDays.length - 1][1] < 0) {
+              list.push({ type: 'worstDay', text: `Worst Day: ${sortedDays[sortedDays.length - 1][0]}` });
+            }
+          }
+
+          const hourEntries = Object.entries(hourMap);
+          if (hourEntries.length > 0) {
+            const sortedHours = [...hourEntries].sort((a, b) => b[1] - a[1]);
+            const formatHour = (h) => {
+              const num = parseInt(h);
+              if (num === 0) return '12 AM';
+              if (num === 12) return '12 PM';
+              return num > 12 ? `${num - 12} PM` : `${num} AM`;
+            };
+            list.push({ type: 'bestHour', text: `Best Hour: ${formatHour(sortedHours[0][0])}` });
+            if (sortedHours.length > 1 && sortedHours[sortedHours.length - 1][1] < 0) {
+              list.push({ type: 'worstHour', text: `Worst Hour: ${formatHour(sortedHours[sortedHours.length - 1][0])}` });
+            }
+          }
+        }
+
+        setInsights(list);
+      } catch (err) {
+        console.error('Header metrics err:', err);
+      }
+    };
+    fetchHeaderMetrics();
+  }, [user, profile?.preferred_name, profile?.show_demo_data, profile?.currency, location.pathname]);
+
+  // Interval rotation loop
+  useEffect(() => {
+    if (insights.length <= 1) return;
+    const interval = setInterval(() => {
+      setFade(false);
+      setTimeout(() => {
+        setInsightIndex((prev) => (prev + 1) % insights.length);
+        setFade(true);
+      }, 300); // match fade transition duration smoothly
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [insights]);
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -163,6 +276,60 @@ export default function Header({ profile, user}) {
           );
         })}
       </nav>
+
+      {/* Dynamic Personal Header Analytics Insight Banner */}
+      <div
+        onClick={() => {
+          if (insights.length === 0) return;
+          const item = insights[insightIndex];
+          if (item.type === 'winRate' || item.type === 'bestTrade' || item.type === 'execution') {
+            navigate('/analytics#edge');
+          } else if (item.type === 'bestDay' || item.type === 'worstDay' || item.type === 'bestHour' || item.type === 'worstHour') {
+            navigate('/analytics#timing');
+          } else {
+            navigate('/analytics#edge');
+          }
+        }}
+        style={{
+          fontSize: '0.88rem',
+          fontWeight: '600',
+          color: 'var(--text-muted)',
+          marginRight: '12px',
+          whiteSpace: 'nowrap',
+          opacity: fade ? 1 : 0,
+          transform: fade ? 'translateY(0)' : 'translateY(-1px)',
+          transition: 'opacity 0.25s ease, transform 0.25s ease, color 0.15s ease',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          userSelect: 'none',
+        }}
+        onMouseEnter={e => e.currentTarget.style.color = 'var(--text-main)'}
+        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+        className="header-insights-bar"
+      >
+        {(() => {
+          if (insights.length === 0) {
+            const displayName = profile?.preferred_name?.trim() || user?.email?.split('@')[0];
+            return <span>👋 Hi, {displayName}</span>;
+          }
+          const item = insights[insightIndex];
+          if (item.type === 'greeting') {
+            return <span>{item.text}</span>;
+          }
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {item.type === 'winRate' && <TrendingUp size={14} style={{ color: 'var(--accent-lime)' }} />}
+              {item.type === 'bestTrade' && <Trophy size={14} style={{ color: 'var(--accent-amber, #f59f00)' }} />}
+              {item.type === 'execution' && <BarChart3 size={14} style={{ color: 'var(--accent-blue, #4dabf7)' }} />}
+              {(item.type === 'bestDay' || item.type === 'worstDay') && <Calendar size={14} style={{ color: item.type === 'bestDay' ? 'var(--accent-lime)' : 'var(--color-loss)' }} />}
+              {(item.type === 'bestHour' || item.type === 'worstHour') && <Clock size={14} style={{ color: item.type === 'bestHour' ? 'var(--accent-lime)' : 'var(--color-loss)' }} />}
+              <span>{item.text}</span>
+            </div>
+          );
+        })()}
+      </div>
 
       {/* Right: profile avatar */}
       <div style={{ position: 'relative', flexShrink: 0 }} ref={dropdownRef}>
