@@ -100,8 +100,13 @@ export default function TradeTable({ trades = [], onTradeChanged }) {
     setDeletingId(id)
     setRowError((e) => ({ ...e, [id]: null }))
     try {
-      const { error } = await supabase.from('trades').delete().eq('id', id)
-      if (error) throw error
+      // 1. Try RPC delete_trade first
+      const { error: rpcErr } = await supabase.rpc('delete_trade', { p_id: id })
+      if (rpcErr) {
+        // 2. Direct delete fallback
+        const { error: delErr } = await supabase.from('trades').delete().eq('id', id)
+        if (delErr) throw delErr
+      }
       setConfirmDel(null)
       setSelectedIds((prev) => prev.filter((item) => item !== id))
       onTradeChanged?.()
@@ -118,8 +123,22 @@ export default function TradeTable({ trades = [], onTradeChanged }) {
     setBulkSaving(true)
     setBulkError(null)
     try {
-      const { error } = await supabase.from('trades').delete().in('id', selectedIds)
-      if (error) throw error
+      // 1. Execute delete_trade RPC for each selected trade ID
+      const rpcPromises = selectedIds.map((id) =>
+        supabase.rpc('delete_trade', { p_id: id })
+      )
+      const rpcResults = await Promise.all(rpcPromises)
+
+      // 2. Direct table delete for any remaining selected trade IDs
+      const { error: directErr } = await supabase
+        .from('trades')
+        .delete()
+        .in('id', selectedIds)
+
+      if (directErr && rpcResults.some((r) => r.error)) {
+        throw directErr
+      }
+
       setSelectedIds([])
       setShowBulkDeleteModal(false)
       onTradeChanged?.()

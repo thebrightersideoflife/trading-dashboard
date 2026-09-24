@@ -9,6 +9,22 @@ import { formatCurrency } from '../../utils/formatters';
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 /**
+ * Format P&L for calendar cell display to match compact screenshot style:
+ * e.g., +$1.2k, +$12k, +$9.1k, +$4.0k, +$17k, +$18k, +$22k, +$23k, +$19k, +$3.9k
+ */
+function formatCalendarPnl(pnl) {
+  if (pnl == null || pnl === 0) return null;
+  const abs = Math.abs(pnl);
+  const sign = pnl >= 0 ? '+' : '−';
+  if (abs >= 1000) {
+    const k = abs / 1000;
+    const formatted = (k >= 10 && Number.isInteger(k)) ? k.toFixed(0) : k.toFixed(1);
+    return `${sign}$${formatted}k`;
+  }
+  return `${sign}$${abs.toFixed(0)}`;
+}
+
+/**
  * CalendarPage
  * Full-page calendar view with:
  * - Daily P&L heatmap cells
@@ -25,19 +41,19 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
   } = useJournal(sessionReady);
 
   const today = new Date();
-  // Format a local date as 'YYYY-MM-DD' without UTC conversion
   const localDateKey = (d) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const todayKey = localDateKey(today);
 
-  const [viewYear,  setViewYear]  = useState(today.getFullYear());
+  const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
 
-  const [editingWeek,  setEditingWeek]  = useState(null); // 'YYYY-WW'
-  const [editTarget,   setEditTarget]   = useState('');
+  const [editingWeek, setEditingWeek] = useState(null); // 'YYYY-WW'
+  const [editTarget, setEditTarget] = useState('');
   const [selectedDate, setSelectedDate] = useState(null); // 'YYYY-MM-DD'
 
   const defaultWeeklyTarget = profile?.weekly_default_target ?? 500;
+  const themeColor = profile?.theme_color || 'var(--accent-lime)';
 
   // Build weekTargets lookup: { 'YYYY-MM-DD': target } keyed by week_start
   const weekTargetMap = Object.fromEntries(
@@ -55,20 +71,20 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
   }, [dailyPnl]);
 
   // Month stats
-  const monthKey     = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}`;
+  const monthKey = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}`;
   const monthEntries = Object.entries(pnlMap).filter(([k]) => k.startsWith(monthKey));
-  const monthTotal   = monthEntries.reduce((s, [, v]) => s + (v.total_pnl ?? 0), 0);
-  const monthTrades  = monthEntries.reduce((s, [, v]) => s + (v.trades    ?? 0), 0);
-  const winDays      = monthEntries.filter(([, v]) => v.total_pnl > 0).length;
-  const lossDays     = monthEntries.filter(([, v]) => v.total_pnl < 0).length;
+  const monthTotal = monthEntries.reduce((s, [, v]) => s + (v.total_pnl ?? 0), 0);
+  const monthTrades = monthEntries.reduce((s, [, v]) => s + (v.trades ?? 0), 0);
+  const winDays = monthEntries.filter(([, v]) => v.total_pnl > 0).length;
+  const lossDays = monthEntries.filter(([, v]) => v.total_pnl < 0).length;
 
   // Calendar grid
   const firstDay = new Date(viewYear, viewMonth, 1);
-  const lastDay  = new Date(viewYear, viewMonth + 1, 0);
+  const lastDay = new Date(viewYear, viewMonth + 1, 0);
   const isoWeekday = (d) => (d.getDay() + 6) % 7;
-  const startPad   = isoWeekday(firstDay);
+  const startPad = isoWeekday(firstDay);
   const daysInMonth = lastDay.getDate();
-  const totalCells  = Math.ceil((startPad + daysInMonth) / 7) * 7;
+  const totalCells = Math.ceil((startPad + daysInMonth) / 7) * 7;
 
   // ISO week key: 'YYYY-WW'
   function isoWeekKey(date) {
@@ -85,7 +101,7 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
     const cells = Array.from({ length: totalCells }, (_, i) => {
       const dayNum = i - startPad + 1;
       if (dayNum < 1 || dayNum > daysInMonth) return null;
-      const d   = new Date(viewYear, viewMonth, dayNum);
+      const d = new Date(viewYear, viewMonth, dayNum);
       const key = localDateKey(d);
       const data = pnlMap[key] ?? null;
       const isToday = key === todayKey;
@@ -98,15 +114,14 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
       const week = cells.slice(i, i + 7);
       const validCells = week.filter(Boolean);
       if (validCells.length === 0) continue;
-      const weekKey   = validCells[0].weekKey;
-      const weekPnl   = validCells.reduce((s, c) => s + (c.data?.total_pnl ?? 0), 0);
-      // Derive true Monday of this ISO week (not just first visible cell)
+      const weekKey = validCells[0].weekKey;
+      const weekPnl = validCells.reduce((s, c) => s + (c.data?.total_pnl ?? 0), 0);
       const _firstDate = new Date(viewYear, viewMonth, validCells[0].dayNum);
-      const _dow = (_firstDate.getDay() + 6) % 7; // 0=Mon … 6=Sun
+      const _dow = (_firstDate.getDay() + 6) % 7;
       const _mon = new Date(_firstDate);
       _mon.setDate(_firstDate.getDate() - _dow);
-      const weekStart = `${_mon.getFullYear()}-${String(_mon.getMonth()+1).padStart(2,'0')}-${String(_mon.getDate()).padStart(2,'0')}`;
-      const weekTarget  = weekTargetMap[weekStart] ?? defaultWeeklyTarget;
+      const weekStart = `${_mon.getFullYear()}-${String(_mon.getMonth() + 1).padStart(2, '0')}-${String(_mon.getDate()).padStart(2, '0')}`;
+      const weekTarget = weekTargetMap[weekStart] ?? defaultWeeklyTarget;
       result.push({ weekKey, weekStart, cells: week, weekPnl, weekTarget });
     }
     return result;
@@ -122,6 +137,7 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
     if (pnl < 0) return `rgba(var(--color-loss-rgb), ${0.15 + intensity * 0.35})`;
     return 'transparent';
   }
+
   function cellBorder(pnl) {
     if (pnl == null) return 'var(--border-color)';
     if (pnl > 0) return 'rgba(var(--accent-lime-rgb), 0.45)';
@@ -150,340 +166,340 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
 
   return (
     <>
-    <div className="dashboard-container">
-    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-      {/* Page header */}
-      <div style={{ marginBottom: '1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-0.03em', margin: 0 }}>
-            Trade Calendar
-          </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginTop: '5px' }}>
-            Daily P&L heatmap · Weekly targets
-          </p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <NavBtn onClick={prevMonth}>&#8592;</NavBtn>
-          <span style={{ minWidth: '155px', textAlign: 'center', fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-main)' }}>
-            {monthLabel}
-          </span>
-          <NavBtn onClick={nextMonth}>&#8594;</NavBtn>
-        </div>
-      </div>
-
-      {/* Month summary strip */}
-      <div style={{
-        display: 'flex',
-        gap: '1rem',
-        marginBottom: '1.5rem',
-        flexWrap: 'wrap',
-      }}>
-        {[
-          { label: 'Month P&L',  value: formatCurrency(monthTotal),  color: monthTotal >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)' },
-          { label: 'Trades',     value: monthTrades,                  color: 'var(--text-main)' },
-          { label: 'Win Days',   value: winDays,                      color: 'var(--accent-lime)' },
-          { label: 'Loss Days',  value: lossDays,                     color: 'var(--color-loss)' },
-        ].map(({ label, value, color }) => (
-          <div key={label} style={{
-            flex: '1 1 120px',
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '10px',
-            padding: '14px 18px',
-          }}>
-            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: '600', marginBottom: '4px' }}>
-              {label}
+      <div className="dashboard-container">
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          {/* Page header */}
+          <div style={{ marginBottom: '1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h1 style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-0.03em', margin: 0 }}>
+                Trade Calendar
+              </h1>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginTop: '5px' }}>
+                Daily P&L heatmap · Weekly targets
+              </p>
             </div>
-            <div style={{ fontSize: '1.25rem', fontWeight: '700', color }}>
-              {value}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <NavBtn onClick={prevMonth}>&#8592;</NavBtn>
+              <span style={{ minWidth: '155px', textAlign: 'center', fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-main)' }}>
+                {monthLabel}
+              </span>
+              <NavBtn onClick={nextMonth}>&#8594;</NavBtn>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Calendar grid */}
-      <div style={{
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '14px',
-        overflow: 'hidden',
-      }}>
-        {/* Weekday headers */}
-        <div className="calendar-header-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr repeat(7, 1fr)',
-          gap: '6px',
-          padding: '14px 16px 6px',
-          borderBottom: '1px solid var(--border-color)',
-        }}>
-          <div className="calendar-week-col" /> {/* week column header */}
-          {WEEKDAYS.map(d => (
-            <div key={d} style={{
-              textAlign: 'center',
-              fontSize: '0.68rem',
-              fontWeight: '600',
-              color: 'var(--text-muted)',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              padding: '4px 0',
-            }}>
-              {d}
-            </div>
-          ))}
-        </div>
-
-        {/* Week rows */}
-        <div style={{ padding: '10px 16px 16px' }}>
-          {rows.map(({ weekKey, weekStart, cells, weekPnl, weekTarget }) => {
-            const progress = weekTarget > 0 ? Math.min(weekPnl / weekTarget, 1) : 0;
-            const isEditing = editingWeek === weekKey;
-            const ahead = weekPnl >= weekTarget;
-
-            return (
-              <div key={weekKey} style={{ marginBottom: '10px' }}>
-                {/* Day cells row */}
-                <div className="calendar-row-grid" style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr repeat(7, 1fr)',
-                  gap: '6px',
-                  marginBottom: '5px',
-                }}>
-                  {/* Weekly target column */}
-                  <div className="calendar-week-col" style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    paddingRight: '4px',
-                  }}>
-                    {isEditing ? (
-                      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                        <input
-                          autoFocus
-                          type="number"
-                          value={editTarget}
-                          onChange={e => setEditTarget(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') saveWeekTarget(weekStart);
-                            if (e.key === 'Escape') setEditingWeek(null);
-                          }}
-                          style={{
-                            width: '70px',
-                            background: 'var(--bg-main)',
-                            border: '1px solid var(--accent-lime)',
-                            borderRadius: '5px',
-                            color: 'var(--text-main)',
-                            fontSize: '0.72rem',
-                            padding: '4px 6px',
-                            outline: 'none',
-                            fontFamily: 'inherit',
-                          }}
-                        />
-                        <button
-                          onClick={() => saveWeekTarget(weekStart)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-lime)', padding: '2px', fontSize: '0.7rem' }}
-                        >✓</button>
-                      </div>
-                    ) : (
-                      <WeekTargetButton
-                        weekTarget={weekTarget}
-                        ahead={ahead}
-                        onClick={() => { setEditingWeek(weekKey); setEditTarget(String(weekTarget)); }}
-                      />
-                    )}
-                  </div>
-
-                  {/* Day cells */}
-                  {cells.map((cell, i) => {
-                    if (!cell) return <div key={`empty-${weekKey}-${i}`} />;
-                    const { dayNum, key, data, isToday } = cell;
-                    const pnl = data?.total_pnl ?? null;
-                    return (
-                      <div
-                        key={key}
-                        onClick={() => setSelectedDate(key)}
-                        style={{
-                          aspectRatio: '1',
-                          background: cellBg(pnl),
-                          border: `1px solid ${isToday ? 'var(--accent-lime)' : cellBorder(pnl)}`,
-                          borderRadius: '7px',
-                          display: 'grid',
-                          gridTemplateRows: 'auto 1fr auto',
-                          padding: '6px 6px 5px',
-                          minHeight: '70px',
-                          transition: 'transform 0.1s',
-                          cursor: 'pointer',
-                          boxSizing: 'border-box',
-                          position: 'relative',
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                      >
-                        {/* ── Row 1: day number (top-left) + today dot (top-right) ── */}
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}>
-                          <span style={{
-                            fontSize: '0.78rem',
-                            fontWeight: '700',
-                            color: isToday ? 'var(--accent-lime)' : 'var(--text-main)',
-                            lineHeight: 1,
-                          }}>
-                            {dayNum}
-                          </span>
-                          {/* Today indicator dot */}
-                          {isToday && (
-                            <span style={{
-                              width: '6px',
-                              height: '6px',
-                              borderRadius: '50%',
-                              background: 'var(--accent-lime)',
-                              display: 'inline-block',
-                              flexShrink: 0,
-                            }} />
-                          )}
-                          {/* Journal entry dot */}
-                          {!isToday && getEntryForDate(key) && (
-                            <span title="Journal entry" style={{
-                              width: '5px',
-                              height: '5px',
-                              borderRadius: '50%',
-                              background: '#74c0fc',
-                              display: 'inline-block',
-                              flexShrink: 0,
-                            }} />
-                          )}
-                        </div>
-
-                        {/* ── Row 2: P&L centred vertically and horizontally ── */}
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}>
-                          {pnl != null && (
-                            <span style={{
-                              fontSize: '0.78rem',
-                              fontWeight: '800',
-                              color: pnl >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)',
-                              lineHeight: 1,
-                              maxWidth: '100%',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              textAlign: 'center',
-                              letterSpacing: '-0.02em',
-                            }}>
-                              {pnl >= 0 ? '+' : '−'}${Math.abs(pnl).toFixed(0)}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* ── Row 3: trade count bottom-right ── */}
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'flex-end',
-                          alignItems: 'flex-end',
-                        }}>
-                          {data?.trades > 0 && (
-                            <span style={{
-                              fontSize: '0.62rem',
-                              fontWeight: '600',
-                              color: 'var(--text-main)',
-                              lineHeight: 1,
-                            }}>
-                              {data.trades} trade{data.trades !== 1 ? 's' : ''}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Weekly progress bar */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 7fr',
-                  gap: '6px',
-                  alignItems: 'center',
-                }}>
-                  {/* Week P&L label */}
-                  <div style={{
-                    fontSize: '0.65rem',
-                    fontWeight: '700',
-                    color: weekPnl >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)',
-                    textAlign: 'right',
-                    paddingRight: '4px',
-                  }}>
-                    {weekPnl !== 0 ? (weekPnl >= 0 ? '+' : '') + weekPnl.toFixed(0) : ''}
-                  </div>
-                  {/* Bar */}
-                  <div style={{
-                    height: '4px',
-                    background: 'var(--border-color)',
-                    borderRadius: '2px',
-                    overflow: 'hidden',
-                  }}>
-                    {weekPnl !== 0 && (
-                      <div style={{
-                        height: '100%',
-                        width: `${Math.abs(progress) * 100}%`,
-                        background: weekPnl >= 0
-                          ? (ahead ? 'var(--accent-lime)' : 'rgba(var(--accent-lime-rgb), 0.65)')
-                          : 'var(--color-loss)',
-                        borderRadius: '2px',
-                        transition: 'width 0.3s ease',
-                      }} />
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Legend */}
-        <div style={{
-          padding: '10px 20px 14px',
-          borderTop: '1px solid var(--border-color)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '8px',
-        }}>
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-            ✏ Click a week's target to override it · Default: {formatCurrency(defaultWeeklyTarget)}/week
-          </span>
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Month summary strip */}
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
+            marginBottom: '1.5rem',
+            flexWrap: 'wrap',
+          }}>
             {[
-              { color: 'rgba(var(--accent-lime-rgb), 0.45)', label: 'Profit day' },
-              { color: 'rgba(var(--color-loss-rgb), 0.45)', label: 'Loss day' },
-            ].map(({ color, label }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <div style={{ width: '10px', height: '10px', background: color, borderRadius: '2px' }} />
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{label}</span>
+              { label: 'Month P&L', value: formatCurrency(monthTotal), color: monthTotal >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)' },
+              { label: 'Trades', value: monthTrades, color: 'var(--text-main)' },
+              { label: 'Win Days', value: winDays, color: 'var(--accent-lime)' },
+              { label: 'Loss Days', value: lossDays, color: 'var(--color-loss)' },
+            ].map(({ label, value, color }) => (
+              <div key={label} style={{
+                flex: '1 1 120px',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '10px',
+                padding: '14px 18px',
+              }}>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: '600', marginBottom: '4px' }}>
+                  {label}
+                </div>
+                <div style={{ fontSize: '1.25rem', fontWeight: '700', color }}>
+                  {value}
+                </div>
               </div>
             ))}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{
-                fontSize: '0.58rem', fontWeight: '600', color: 'var(--text-main)',
-                background: 'rgba(255,255,255,0.08)', borderRadius: '3px', padding: '1px 4px',
-              }}>3</span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Trade count</span>
+          </div>
+
+          {/* Calendar grid */}
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '14px',
+            overflow: 'hidden',
+          }}>
+            {/* Weekday headers */}
+            <div className="calendar-header-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr repeat(7, 1fr)',
+              gap: '6px',
+              padding: '14px 16px 8px',
+              borderBottom: '1px solid var(--border-color)',
+            }}>
+              <div className="calendar-week-col" />
+              {WEEKDAYS.map(d => (
+                <div key={d} style={{
+                  textAlign: 'center',
+                  fontSize: '0.95rem',
+                  fontWeight: '700',
+                  color: 'var(--text-main)',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  padding: '6px 0',
+                }}>
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            {/* Week rows */}
+            <div style={{ padding: '10px 16px 16px' }}>
+              {rows.map(({ weekKey, weekStart, cells, weekPnl, weekTarget }) => {
+                const progress = weekTarget > 0 ? Math.min(weekPnl / weekTarget, 1) : 0;
+                const isEditing = editingWeek === weekKey;
+                const ahead = weekPnl >= weekTarget;
+
+                return (
+                  <div key={weekKey} style={{ marginBottom: '10px' }}>
+                    {/* Day cells row */}
+                    <div className="calendar-row-grid" style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr repeat(7, 1fr)',
+                      gap: '6px',
+                      marginBottom: '5px',
+                    }}>
+                      {/* Weekly target column */}
+                      <div className="calendar-week-col" style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        paddingRight: '4px',
+                      }}>
+                        {isEditing ? (
+                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            <input
+                              autoFocus
+                              type="number"
+                              value={editTarget}
+                              onChange={e => setEditTarget(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') saveWeekTarget(weekStart);
+                                if (e.key === 'Escape') setEditingWeek(null);
+                              }}
+                              style={{
+                                width: '70px',
+                                background: 'var(--bg-main)',
+                                border: '1px solid var(--accent-lime)',
+                                borderRadius: '5px',
+                                color: 'var(--text-main)',
+                                fontSize: '0.72rem',
+                                padding: '4px 6px',
+                                outline: 'none',
+                                fontFamily: 'inherit',
+                              }}
+                            />
+                            <button
+                              onClick={() => saveWeekTarget(weekStart)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-lime)', padding: '2px', fontSize: '0.7rem' }}
+                            >✓</button>
+                          </div>
+                        ) : (
+                          <WeekTargetButton
+                            weekTarget={weekTarget}
+                            ahead={ahead}
+                            onClick={() => { setEditingWeek(weekKey); setEditTarget(String(weekTarget)); }}
+                          />
+                        )}
+                      </div>
+
+                      {/* Day cells */}
+                      {cells.map((cell, i) => {
+                        if (!cell) return <div key={`empty-${weekKey}-${i}`} />;
+                        const { dayNum, key, data, isToday } = cell;
+                        const pnl = data?.total_pnl ?? null;
+                        const tradesCount = data?.trades ?? 0;
+                        const isSelected = selectedDate === key;
+
+                        return (
+                          <div
+                            key={key}
+                            onClick={() => setSelectedDate(key)}
+                            style={{
+                              aspectRatio: '1.1 / 1',
+                              minHeight: '110px',
+                              background: cellBg(pnl),
+                              border: `2px solid ${isSelected ? themeColor : (isToday ? 'var(--accent-lime)' : cellBorder(pnl))}`,
+                              borderRadius: '8px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-start',
+                              padding: '12px 14px',
+                              transition: 'transform 0.1s, border-color 0.1s',
+                              cursor: 'pointer',
+                              boxSizing: 'border-box',
+                              position: 'relative',
+                              boxShadow: isSelected ? '0 0 12px rgba(var(--accent-lime-rgb), 0.4)' : 'none',
+                              zIndex: isSelected ? 2 : 1,
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                          >
+                            {/* Row 1: day number (top-left) + today/journal dots (top-right) */}
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              width: '100%',
+                            }}>
+                              <span style={{
+                                fontSize: '1.25rem',
+                                fontWeight: '700',
+                                color: isToday ? 'var(--accent-lime)' : 'var(--text-main)',
+                                lineHeight: 1,
+                              }}>
+                                {dayNum}
+                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                {isToday && (
+                                  <span style={{
+                                    width: '7px',
+                                    height: '7px',
+                                    borderRadius: '50%',
+                                    background: 'var(--accent-lime)',
+                                    display: 'inline-block',
+                                    flexShrink: 0,
+                                  }} />
+                                )}
+                                {!isToday && getEntryForDate(key) && (
+                                  <span title="Journal entry" style={{
+                                    width: '6px',
+                                    height: '6px',
+                                    borderRadius: '50%',
+                                    background: '#74c0fc',
+                                    display: 'inline-block',
+                                    flexShrink: 0,
+                                  }} />
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Bottom-Left Data Stack */}
+                            <div style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'flex-start',
+                              justifyContent: 'flex-end',
+                              gap: '3px',
+                              width: '100%',
+                              marginTop: 'auto',
+                            }}>
+                              {pnl != null && (
+                                <span style={{
+                                  fontSize: 'clamp(1.1rem, 1.35vw, 1.45rem)',
+                                  fontWeight: '700',
+                                  color: pnl >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)',
+                                  lineHeight: 1.15,
+                                  maxWidth: '100%',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  textAlign: 'left',
+                                  letterSpacing: '-0.02em',
+                                }}>
+                                  {formatCalendarPnl(pnl)}
+                                </span>
+                              )}
+                              {tradesCount > 0 && (
+                                <span style={{
+                                  fontSize: 'clamp(0.82rem, 0.95vw, 0.95rem)',
+                                  fontWeight: '600',
+                                  color: 'var(--text-main)',
+                                  lineHeight: 1.1,
+                                  textAlign: 'left',
+                                  opacity: 0.9,
+                                }}>
+                                  {tradesCount} trade{tradesCount !== 1 ? 's' : ''}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Weekly progress bar */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 7fr',
+                      gap: '6px',
+                      alignItems: 'center',
+                    }}>
+                      <div style={{
+                        fontSize: '0.65rem',
+                        fontWeight: '700',
+                        color: weekPnl >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)',
+                        textAlign: 'right',
+                        paddingRight: '4px',
+                      }}>
+                        {weekPnl !== 0 ? (weekPnl >= 0 ? '+' : '') + weekPnl.toFixed(0) : ''}
+                      </div>
+                      <div style={{
+                        height: '4px',
+                        background: 'var(--border-color)',
+                        borderRadius: '2px',
+                        overflow: 'hidden',
+                      }}>
+                        {weekPnl !== 0 && (
+                          <div style={{
+                            height: '100%',
+                            width: `${Math.min(Math.abs(progress) * 100, 100)}%`,
+                            background: weekPnl >= 0
+                              ? (ahead ? 'var(--accent-lime)' : 'rgba(var(--accent-lime-rgb), 0.65)')
+                              : 'var(--color-loss)',
+                            borderRadius: '2px',
+                            transition: 'width 0.3s ease',
+                          }} />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Legend */}
+            <div style={{
+              padding: '10px 20px 14px',
+              borderTop: '1px solid var(--border-color)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '8px',
+            }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                ✏ Click a week's target to override it · Default: {formatCurrency(defaultWeeklyTarget)}/week
+              </span>
+              <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+                {[
+                  { color: 'rgba(var(--accent-lime-rgb), 0.45)', label: 'Profit day' },
+                  { color: 'rgba(var(--color-loss-rgb), 0.45)', label: 'Loss day' },
+                ].map(({ color, label }) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <div style={{ width: '10px', height: '10px', background: color, borderRadius: '2px' }} />
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{label}</span>
+                  </div>
+                ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div style={{ width: '10px', height: '10px', border: `2px solid ${themeColor}`, borderRadius: '2px' }} />
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Selected day</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    </div>
 
-      {/* ── Journal side panel ────────────────────────────── */}
+      {/* Journal side panel */}
       {selectedDate && (
         <>
-          {/* Backdrop */}
           <div
             onClick={() => setSelectedDate(null)}
             style={{
@@ -505,13 +521,13 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
           />
         </>
       )}
-    <style>{`
-      @media (max-width: 768px) {
-        .calendar-week-col { display: none !important; }
-        .calendar-header-grid { grid-template-columns: repeat(7, 1fr) !important; padding: 10px 10px 4px !important; }
-        .calendar-row-grid { grid-template-columns: repeat(7, 1fr) !important; }
-      }
-    `}</style>
+      <style>{`
+        @media (max-width: 768px) {
+          .calendar-week-col { display: none !important; }
+          .calendar-header-grid { grid-template-columns: repeat(7, 1fr) !important; padding: 10px 10px 4px !important; }
+          .calendar-row-grid { grid-template-columns: repeat(7, 1fr) !important; }
+        }
+      `}</style>
     </>
   );
 }
@@ -539,12 +555,7 @@ function WeekTargetButton({ weekTarget, ahead, onClick }) {
         transition: 'border-color 0.15s, background 0.15s, border-style 0.15s',
       }}
     >
-      {/* Label row */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px',
-      }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
         <span style={{
           fontSize: '0.6rem',
           color: hovered ? 'var(--accent-lime)' : 'var(--text-muted)',
@@ -555,7 +566,6 @@ function WeekTargetButton({ weekTarget, ahead, onClick }) {
         }}>
           Target
         </span>
-        {/* Pencil icon — always visible but dims when not hovered */}
         <svg
           width="9" height="9" viewBox="0 0 12 12" fill="none"
           style={{ opacity: hovered ? 1 : 0.35, transition: 'opacity 0.15s' }}
@@ -568,8 +578,6 @@ function WeekTargetButton({ weekTarget, ahead, onClick }) {
           />
         </svg>
       </div>
-
-      {/* Value */}
       <span style={{
         fontSize: '0.72rem',
         fontWeight: '700',

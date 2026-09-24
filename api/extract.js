@@ -41,7 +41,9 @@ const TRADE_SCHEMA = {
 };
 
 const CANDIDATE_MODELS = [
-  'gemini-3.6-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-2.5-flash',
 ];
 
 const PROMPT_TEXT =
@@ -51,10 +53,18 @@ const PROMPT_TEXT =
   'If a value is genuinely not visible for a row, omit that field rather than guessing.';
 
 async function callGeminiWithFallbackAndRetry(apiKey, imageBase64, mimeType) {
-  let errors = [];
+  let lastError = null;
+
+  if (apiKey.startsWith('AQ.')) {
+    throw new Error(
+      'Invalid GEMINI_API_KEY format. Keys starting with "AQ." are Google Cloud OAuth tokens, not Google AI Studio keys. ' +
+      'Please get a free Google AI Studio API key (starts with "AIza...") from https://aistudio.google.com/app/apikey ' +
+      'and add GEMINI_API_KEY=AIza... to your .env file.'
+    );
+  }
 
   for (const model of CANDIDATE_MODELS) {
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -68,15 +78,8 @@ async function callGeminiWithFallbackAndRetry(apiKey, imageBase64, mimeType) {
               contents: [
                 {
                   parts: [
-                    {
-                      text: PROMPT_TEXT,
-                    },
-                    {
-                      inline_data: {
-                        mime_type: mimeType || 'image/jpeg',
-                        data: imageBase64,
-                      },
-                    },
+                    { text: PROMPT_TEXT },
+                    { inline_data: { mime_type: mimeType || 'image/jpeg', data: imageBase64 } },
                   ],
                 },
               ],
@@ -99,74 +102,39 @@ async function callGeminiWithFallbackAndRetry(apiKey, imageBase64, mimeType) {
         }
 
         const msg = errData?.error?.message || `HTTP ${res.status}`;
+        lastError = msg;
 
-        // If 400, 401, or 403, try Authorization Bearer header if key starts with AQ
-        if ((res.status === 400 || res.status === 401 || res.status === 403) && apiKey.startsWith('AQ.')) {
-          const bearerRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
-                'x-goog-api-key': apiKey,
-              },
-              body: JSON.stringify({
-                contents: [
-                  {
-                    parts: [
-                      {
-                        text: PROMPT_TEXT,
-                      },
-                      {
-                        inline_data: {
-                          mime_type: mimeType || 'image/jpeg',
-                          data: imageBase64,
-                        },
-                      },
-                    ],
-                  },
-                ],
-                generationConfig: {
-                  responseMimeType: 'application/json',
-                  responseSchema: TRADE_SCHEMA,
-                },
-              }),
-            }
-          );
-
-          if (bearerRes.ok) {
-            const bearerData = await bearerRes.json();
-            const text = bearerData?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) {
-              const cleaned = text.replace(/```json|```/g, '').trim();
-              return JSON.parse(cleaned);
-            }
-          }
-        }
-
-        // If still API key error, throw exact message
         if (res.status === 400 || res.status === 401 || res.status === 403) {
-          throw new Error(`Gemini API Key Error (${res.status}): ${msg}`);
+          throw new Error(
+            `Gemini API Key Error (${res.status}): Please check GEMINI_API_KEY in .env. ` +
+            `Make sure it is a valid Google AI Studio key starting with "AIza..." (from https://aistudio.google.com/app/apikey). ${msg}`
+          );
         }
 
-        if (res.status === 503 || res.status === 429) {
-          console.warn(`[Gemini API ${res.status}] ${model} attempt ${attempt} busy. Retrying...`);
-          await new Promise((r) => setTimeout(r, attempt * 1200));
-          continue;
+        if (res.status === 429 || res.status === 503) {
+          console.warn(`[Gemini API 429/503 for ${model}] Rate limit reached. Trying fallback candidate model...`);
+          break;
         }
 
-        errors.push(`[${model}]: ${msg}`);
-        break;
+        if (res.status === 404) {
+          console.warn(`[Gemini API 404 for ${model}] Model not found. Trying next candidate model...`);
+          break;
+        }
+
+        await new Promise((r) => setTimeout(r, 1000));
       } catch (err) {
-        if (err.message.includes('Gemini API Key Error')) throw err;
-        errors.push(`[${model}]: ${err.message}`);
-        await new Promise((r) => setTimeout(r, attempt * 1000));
+        if (err.message?.includes('Gemini API Key Error') || err.message?.includes('Invalid GEMINI_API_KEY')) throw err;
+        lastError = err.message;
+        await new Promise((r) => setTimeout(r, 1000));
       }
     }
   }
 
-  throw new Error(errors.join(' | ') || 'All Gemini models failed.');
+  if (lastError && (lastError.includes('Quota exceeded') || lastError.includes('429'))) {
+    throw new Error('Gemini API free tier rate limit reached. Please wait ~30 seconds before uploading another screenshot.');
+  }
+
+  throw new Error(lastError || 'Gemini API is temporarily busy. Please wait a few seconds and try again.');
 }
 
 export default async function handler(req) {
@@ -206,7 +174,7 @@ export default async function handler(req) {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: 'Extraction failed', detail: String(err) }), {
+    return new Response(JSON.stringify({ error: 'Extraction failed', detail: err.message || String(err) }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

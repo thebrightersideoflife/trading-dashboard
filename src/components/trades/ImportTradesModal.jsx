@@ -43,8 +43,16 @@ const GEMINI_SCHEMA = {
 }
 
 const CANDIDATE_MODELS = [
-  'gemini-3.6-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-2.5-flash',
 ]
+
+const PROMPT_TEXT =
+  'Extract every row from this trade history table into the given JSON schema. ' +
+  'Read every field exactly as printed. Do not invent, round, or guess any value. ' +
+  'Dates in broker tables are printed as Day.Month.Year Hour:Minute (DD.MM.YY HH:mm, e.g. 06.08.26 10:24 is Day=06, Month=08, Year=26) — copy them exactly as printed into open_date_raw / close_date_raw without reformatting. ' +
+  'If a value is genuinely not visible for a row, omit that field rather than guessing.'
 
 const LOADING_MESSAGES = [
   'Reading image file…',
@@ -56,12 +64,24 @@ const LOADING_MESSAGES = [
   'Still processing, hang tight…',
 ]
 
-async function callGeminiDirectWithFallbackAndRetry(apiKey, imageBase64, mimeType) {
-  let errors = []
+async function callGeminiDirectWithFallbackAndRetry(apiKey, imageBase64, mimeType, onStatusUpdate) {
+  let lastError = null
+
+  if (apiKey.startsWith('AQ.')) {
+    throw new Error(
+      'Invalid GEMINI_API_KEY format. Keys starting with "AQ." are Google Cloud OAuth tokens, not Google AI Studio keys. ' +
+      'Please get a free Google AI Studio API key (starts with "AIza...") from https://aistudio.google.com/app/apikey ' +
+      'and set GEMINI_API_KEY=AIza... in your .env file.'
+    )
+  }
 
   for (const model of CANDIDATE_MODELS) {
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
       try {
+        if (onStatusUpdate) {
+          onStatusUpdate(`Extracting trades with Gemini AI (${model})…`)
+        }
+
         const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
           {
@@ -74,19 +94,8 @@ async function callGeminiDirectWithFallbackAndRetry(apiKey, imageBase64, mimeTyp
               contents: [
                 {
                   parts: [
-                    {
-                      text:
-                        'Extract every row from this trade history table into the given JSON schema. ' +
-                        'Read every field exactly as printed. Do not invent, round, or guess any value. ' +
-                        'Dates are printed as DD.MM.YY HH:mm or similar — copy them exactly as shown into open_date_raw / close_date_raw, do not reformat them yourself. ' +
-                        'If a value is genuinely not visible for a row, omit that field rather than guessing.',
-                    },
-                    {
-                      inline_data: {
-                        mime_type: mimeType || 'image/jpeg',
-                        data: imageBase64,
-                      },
-                    },
+                    { text: PROMPT_TEXT },
+                    { inline_data: { mime_type: mimeType || 'image/jpeg', data: imageBase64 } },
                   ],
                 },
               ],
@@ -109,77 +118,42 @@ async function callGeminiDirectWithFallbackAndRetry(apiKey, imageBase64, mimeTyp
         }
 
         const msg = errData?.error?.message || `HTTP ${res.status}`
-
-        // If 400, 401, or 403, try Authorization Bearer header if key starts with AQ
-        if ((res.status === 400 || res.status === 401 || res.status === 403) && apiKey.startsWith('AQ.')) {
-          const bearerRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
-                'x-goog-api-key': apiKey,
-              },
-              body: JSON.stringify({
-                contents: [
-                  {
-                    parts: [
-                      {
-                        text:
-                          'Extract every row from this trade history table into the given JSON schema. ' +
-                          'Read every field exactly as printed. Do not invent, round, or guess any value. ' +
-                          'Dates are printed as DD.MM.YY HH:mm or similar — copy them exactly as shown into open_date_raw / close_date_raw, do not reformat them yourself. ' +
-                          'If a value is genuinely not visible for a row, omit that field rather than guessing.',
-                      },
-                      {
-                        inline_data: {
-                          mime_type: mimeType || 'image/jpeg',
-                          data: imageBase64,
-                        },
-                      },
-                    ],
-                  },
-                ],
-                generationConfig: {
-                  responseMimeType: 'application/json',
-                  responseSchema: GEMINI_SCHEMA,
-                },
-              }),
-            }
-          )
-
-          if (bearerRes.ok) {
-            const bearerData = await bearerRes.json()
-            const text = bearerData?.candidates?.[0]?.content?.parts?.[0]?.text
-            if (text) {
-              const cleaned = text.replace(/```json|```/g, '').trim()
-              return JSON.parse(cleaned)
-            }
-          }
-        }
+        lastError = msg
 
         if (res.status === 400 || res.status === 401 || res.status === 403) {
-          throw new Error(`Gemini API Key Error (${res.status}): ${msg}`)
+          throw new Error(
+            `Gemini API Key Error (${res.status}): Please check GEMINI_API_KEY in .env. ` +
+            `Make sure it is a valid Google AI Studio key starting with "AIza..." (from https://aistudio.google.com/app/apikey). ${msg}`
+          )
         }
 
-        if (res.status === 503 || res.status === 429) {
-          console.warn(`[Gemini API ${res.status}] ${model} attempt ${attempt} busy. Retrying...`)
-          await new Promise((r) => setTimeout(r, attempt * 1200))
-          continue
+        if (res.status === 429 || res.status === 503) {
+          console.warn(`[Gemini API 429/503 for ${model}] Rate limit reached. Trying fallback model...`)
+          if (onStatusUpdate) {
+            onStatusUpdate(`Rate limit reached on ${model}, trying alternate model…`)
+          }
+          break
         }
 
-        errors.push(`[${model}]: ${msg}`)
-        break
+        if (res.status === 404) {
+          console.warn(`[Gemini API 404 for ${model}] Model not found. Trying next candidate model...`)
+          break
+        }
+
+        await new Promise((r) => setTimeout(r, 1000))
       } catch (err) {
-        if (err.message.includes('Gemini API Key Error')) throw err
-        errors.push(`[${model}]: ${err.message}`)
-        await new Promise((r) => setTimeout(r, attempt * 1000))
+        if (err.message?.includes('Gemini API Key Error') || err.message?.includes('Invalid GEMINI_API_KEY')) throw err
+        lastError = err.message
+        await new Promise((r) => setTimeout(r, 1000))
       }
     }
   }
 
-  throw new Error(errors.join(' | ') || 'All Gemini models failed.')
+  if (lastError && (lastError.includes('Quota exceeded') || lastError.includes('429'))) {
+    throw new Error('Gemini API free tier rate limit reached. Please wait ~30 seconds before uploading another screenshot.')
+  }
+
+  throw new Error(lastError || 'Gemini API is temporarily busy. Please wait a few seconds and try again.')
 }
 
 function fileToBase64(file) {
@@ -245,7 +219,7 @@ export default function ImportTradesModal({ onClose, onTradesSaved }) {
       if (step < LOADING_MESSAGES.length) {
         setStatus(LOADING_MESSAGES[step])
       }
-    }, 4500)
+    }, 3500)
 
     return () => clearInterval(interval)
   }, [loading])
@@ -288,11 +262,11 @@ export default function ImportTradesModal({ onClose, onTradesSaved }) {
         const keyToUse = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY
         if (!keyToUse) {
           throw new Error(
-            'System error: GEMINI_API_KEY is missing from backend environment variables. Please configure GEMINI_API_KEY in your system environment.'
+            'GEMINI_API_KEY is missing. Please set GEMINI_API_KEY in .env file or Vercel environment variables.'
           )
         }
 
-        const parsed = await callGeminiDirectWithFallbackAndRetry(keyToUse, base64, mimeType)
+        const parsed = await callGeminiDirectWithFallbackAndRetry(keyToUse, base64, mimeType, (st) => setStatus(st))
         rawTrades = parsed.trades || []
       }
 
@@ -477,6 +451,7 @@ export default function ImportTradesModal({ onClose, onTradesSaved }) {
               background: 'none',
               border: 'none',
               color: 'var(--text-muted, #8b8b9e)',
+              fontSize: '1.25rem',
               cursor: loading ? 'not-allowed' : 'pointer',
               padding: '6px',
               borderRadius: '6px',

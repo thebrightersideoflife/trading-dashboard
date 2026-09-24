@@ -71,8 +71,8 @@ export default function MainChart({ data, profileColor }) {
   const strokeColor = profileColor || 'var(--chart-line)'
 
   return (
-    <div style={{ width: '100%', height: '100%', padding: '0 10px 20px 10px', minHeight: 0 }}>
-      <ResponsiveContainer width="100%" height="100%" minHeight={0}>
+    <div style={{ width: '100%', height: '100%', minHeight: '260px', padding: '0 10px 20px 10px' }}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 100, height: 260 }}>
         <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
           <defs>
             <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">

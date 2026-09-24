@@ -167,26 +167,25 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
               Export CSV
             </button>
             <button
-              onClick={() => setShowImportModal(true)}
+              disabled
+              title="Import screenshot feature is temporarily disabled"
               style={{
                 backgroundColor: 'transparent',
-                color: 'var(--text-main)',
+                color: 'var(--text-muted)',
                 border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-sm)',
                 padding: '9px 18px',
                 fontWeight: '600',
                 fontSize: '0.875rem',
-                cursor: 'pointer',
+                cursor: 'not-allowed',
+                opacity: 0.5,
                 fontFamily: 'inherit',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                transition: 'border-color 0.15s',
               }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-lime)'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
             >
-              <FileImage size={15} style={{ color: 'var(--accent-lime)' }} />
+              <FileImage size={15} style={{ color: 'var(--text-muted)' }} />
               Import Screenshot
             </button>
             <button
@@ -379,7 +378,6 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
         <AddTradeModal
           onClose={() => setShowModal(false)}
           onTradeAdded={() => { refetch(); setShowModal(false) }}
-          onOpenImport={() => { setShowModal(false); setShowImportModal(true) }}
         />
       )}
       {showImportModal && (

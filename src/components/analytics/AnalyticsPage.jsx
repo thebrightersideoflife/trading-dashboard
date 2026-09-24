@@ -266,7 +266,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
             >
               {bySymbol.length === 0 ? <EmptyState /> : (
                 <div className="analytics-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'start' }}>
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={280} minWidth={0} minHeight={0}>
                     <BarChart data={bySymbol} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }}>
                       <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--chart-tick)' }} tickFormatter={v => `$${v}`} axisLine={false} tickLine={false} />
                       <YAxis type="category" dataKey="symbol" tick={{ fontSize: 12, fill: 'var(--text-muted)', fontWeight: 600 }} width={70} axisLine={false} tickLine={false} />
@@ -370,7 +370,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
               title="P&L by Day of Week"
               subtitle="Which days are consistently profitable or problematic"
             >
-              <ResponsiveContainer width="100%" height={260}>
+              <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0}>
                 <BarChart data={byDow} margin={{ left: 4, right: 4, top: 8, bottom: 4 }}>
                   <XAxis dataKey="day" tick={{ fontSize: 12, fill: 'var(--text-muted)', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: 'var(--chart-tick)' }} tickFormatter={v => `$${v}`} axisLine={false} tickLine={false} width={50} />
@@ -410,7 +410,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
             >
               {byHour.filter(h => h.trades > 0).length === 0 ? <EmptyState /> : (
                 <>
-                  <ResponsiveContainer width="100%" height={240}>
+                  <ResponsiveContainer width="100%" height={240} minWidth={0} minHeight={0}>
                     <BarChart data={byHour} margin={{ left: 4, right: 4, top: 8, bottom: 4 }}>
                       <XAxis
                         dataKey="hour"
@@ -493,7 +493,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
               title="P&L Distribution"
               subtitle="Shape of your trades — healthy distribution has more frequent small losses and occasional large wins"
             >
-              <ResponsiveContainer width="100%" height={260}>
+              <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0}>
                 <BarChart data={histogram} margin={{ left: 4, right: 4, top: 8, bottom: 4 }}>
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} interval={1} />
                   <YAxis tick={{ fontSize: 11, fill: 'var(--chart-tick)' }} axisLine={false} tickLine={false} width={32} allowDecimals={false} />
@@ -553,7 +553,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
             >
               {byMonth.length === 0 ? <EmptyState /> : (
                 <>
-                  <ResponsiveContainer width="100%" height={260}>
+                  <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0}>
                     <BarChart data={byMonth} margin={{ left: 4, right: 4, top: 8, bottom: 4 }}>
                       <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-muted)', fontWeight: 600 }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 11, fill: 'var(--chart-tick)' }} tickFormatter={v => `$${v}`} axisLine={false} tickLine={false} width={56} />
@@ -594,7 +594,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
             >
               {drawdownSeries.length < 2 ? <EmptyState text="Need at least 2 trades for drawdown." /> : (
                 <>
-                  <ResponsiveContainer width="100%" height={220}>
+                  <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={0}>
                     <BarChart data={drawdownSeries} margin={{ left: 4, right: 4, top: 8, bottom: 4 }}>
                       <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false}
                         interval={Math.floor(drawdownSeries.length / 8)} />
