@@ -30,9 +30,14 @@ function formatYTick(value) {
   return `$${(value / 1000).toFixed(1)}K`
 }
 
-const CustomTooltip = ({ active, payload, label, textColor }) => {
+const CustomTooltip = ({ active, payload, label, textColor, chartData }) => {
   if (!active || !payload?.length) return null
   const value = payload[0]?.value
+
+  // Since XAxis has no dataKey, label is the array index
+  const item = chartData?.[label]
+  const dateVal = item ? item.date : null
+
   return (
     <div style={{
       backgroundColor: 'var(--bg-card)',
@@ -43,9 +48,9 @@ const CustomTooltip = ({ active, payload, label, textColor }) => {
       lineHeight: 1.6,
       boxShadow: 'var(--shadow-soft)',
     }}>
-      {label && (
+      {dateVal && (
         <p style={{ color: 'var(--text-muted)', marginBottom: '4px', fontSize: '0.75rem', fontWeight: '500' }}>
-          {formatXTick(label)}
+          {formatXTick(dateVal)}
         </p>
       )}
       <p style={{ color: textColor || 'var(--color-profit)', fontWeight: '700', fontSize: '1rem', margin: 0 }}>
@@ -83,11 +88,12 @@ export default function MainChart({ data, profileColor }) {
           />
 
           <XAxis
-            dataKey="date"
+            scale="point"
+            padding={{ left: 10, right: 10 }}
             axisLine={false}
             tickLine={false}
             tick={{ fill: 'var(--chart-tick)', fontSize: 11, fontWeight: '500' }}
-            tickFormatter={formatXTick}
+            tickFormatter={(val) => formatXTick(chartData[val]?.date)}
             dy={10}
           />
 
@@ -101,7 +107,7 @@ export default function MainChart({ data, profileColor }) {
           />
 
           <Tooltip
-            content={<CustomTooltip textColor={strokeColor} />}
+            content={<CustomTooltip textColor={strokeColor} chartData={chartData} />}
             cursor={{ stroke: 'var(--border-hover)', strokeWidth: 1.5 }}
           />
 

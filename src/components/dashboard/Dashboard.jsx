@@ -1,20 +1,24 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import '../../assets/styles/colors.css'
 import '../../assets/styles/dashboard.css'
 import { useTradingData } from '../../hooks/useTradingData'
 import StatCard from './StatCard'
 import MainChart from './MainChart'
 import ProfitGauge from './ProfitGauge'
+import { FileImage } from 'lucide-react'
 import TradeTable from '../trades/TradeTable'
 import AddTradeModal from '../trades/AddTradeModal'
+import ImportTradesModal from '../trades/ImportTradesModal'
 import TradeCalendar from '../trades/TradeCalendar'
+import LoadingScreen from '../common/LoadingScreen'
 import { formatCurrency, formatDuration } from '../../utils/formatters'
 
 const TIME_FILTERS = [
-  { label: 'All', months: null },
-  { label: '6M',  months: 6   },
-  { label: '3M',  months: 3   },
-  { label: '1M',  months: 1   },
+  { label: 'All',    months: null },
+  { label: '6M',     months: 6    },
+  { label: '3M',     months: 3    },
+  { label: '1M',     months: 1    },
+  { label: 'Custom', months: null },
 ]
 
 /**
@@ -25,9 +29,15 @@ const TIME_FILTERS = [
  *   showDemoData  — bool from App state; determines which DB views are queried
  */
 export default function Dashboard({ sessionReady = true, showDemoData: showDemoProp = true }) {
-  const [showModal,    setShowModal]    = useState(false)
-  const [chartFilter,  setChartFilter]  = useState('All')
-  const [equityCutoff, setEquityCutoff] = useState(null)
+  const [showModal,       setShowModal]       = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [chartFilter,     setChartFilter]     = useState('All')
+  const [customMonths,   setCustomMonths]   = useState(3) // Local modal input value
+  const [appliedMonths,  setAppliedMonths]  = useState(3)  // Confirmed query value
+  const [showCustomCard, setShowCustomCard] = useState(false)
+  const [equityCutoff,   setEquityCutoff]   = useState(null)
+
+  const customCardRef = useRef(null)
 
   const {
     metrics, equityCurve, trades, dailyPnl,
@@ -38,14 +48,32 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
   } = useTradingData(sessionReady, showDemoProp, equityCutoff)
 
 
-  // Update cutoff when chart filter changes
+  // Handle clicking outside custom float card dropdown to close it
   useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (customCardRef.current && !customCardRef.current.contains(e.target)) {
+        setShowCustomCard(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [])
+
+  // Update cutoff when chart filter or confirmed applied custom months changes
+  useEffect(() => {
+    if (chartFilter === 'Custom') {
+      const d = new Date()
+      d.setMonth(d.getMonth() - appliedMonths)
+      setEquityCutoff(d.toISOString())
+      return
+    }
+
     const sel = TIME_FILTERS.find(f => f.label === chartFilter)
     if (!sel?.months) { setEquityCutoff(null); return }
     const d = new Date()
     d.setMonth(d.getMonth() - sel.months)
     setEquityCutoff(d.toISOString())
-  }, [chartFilter])
+  }, [chartFilter, appliedMonths])
 
   // ── Visibility filters ────────────────────────────────────────
 
@@ -64,15 +92,7 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
   // ── Render ────────────────────────────────────────────────────
 
   if (loading) {
-    return (
-      <div className="dashboard-container" style={{
-        display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh',
-      }}>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', letterSpacing: '0.05em' }}>
-          Loading dashboard...
-        </p>
-      </div>
-    )
+    return <LoadingScreen message="Loading dashboard..." />
   }
 
   if (error) {
@@ -128,21 +148,46 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
           }}>
             Account Overview
           </h1>
-          <button
-            onClick={() => setShowModal(true)}
-            style={{
-              backgroundColor: 'var(--accent-lime)',
-              color: '#000',
-              border: 'none',
-              borderRadius: 'var(--radius-sm)',
-              padding: '9px 18px',
-              fontWeight: '700',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-            }}
-          >
-            + Add Trade
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => setShowImportModal(true)}
+              style={{
+                backgroundColor: 'transparent',
+                color: 'var(--text-main)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '9px 18px',
+                fontWeight: '600',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'border-color 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-lime)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
+            >
+              <FileImage size={15} style={{ color: 'var(--accent-lime)' }} />
+              Import Screenshot
+            </button>
+            <button
+              onClick={() => setShowModal(true)}
+              style={{
+                backgroundColor: 'var(--accent-lime)',
+                color: '#000',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                padding: '9px 18px',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+              }}
+            >
+              + Add Trade
+            </button>
+          </div>
         </header>
 
         {/* ── Row 1: Primary stat cards ─────────────────────────── */}
@@ -280,30 +325,109 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
               </div>
 
               {/* ── Time filter pills ── */}
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {TIME_FILTERS.map(({ label }) => {
-                  const active = chartFilter === label
-                  return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+
+                {showCustomCard && (
+                  <div
+                    ref={customCardRef}
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 8px)',
+                      right: 0,
+                      width: '180px',
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '12px 14px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                      zIndex: 200,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                        Filter Duration (Months)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="120"
+                        value={customMonths}
+                        onChange={(e) => setCustomMonths(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          background: 'var(--bg-main)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: 'var(--radius-sm)',
+                          color: 'var(--text-main)',
+                          fontSize: '0.8rem',
+                          padding: '6px 8px',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
                     <button
-                      key={label}
-                      onClick={() => setChartFilter(label)}
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: '5px',
-                        border: `1px solid ${active ? 'var(--accent-lime)' : 'var(--border-color)'}`,
-                        background: active ? 'rgba(var(--accent-lime-rgb), 0.16)' : 'transparent',
-                        color: active ? 'var(--accent-lime)' : 'var(--text-muted)',
-                        fontSize: '0.72rem',
-                        fontWeight: active ? '700' : '500',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                        transition: 'all 0.12s',
+                      onClick={() => {
+                        setAppliedMonths(customMonths)
+                        setChartFilter('Custom')
+                        setShowCustomCard(false)
                       }}
+                      style={{
+                        background: 'var(--accent-lime)',
+                        color: '#000',
+                        border: 'none',
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.75rem',
+                        fontWeight: '700',
+                        padding: '6px 0',
+                        width: '100%',
+                        cursor: 'pointer',
+                        transition: 'opacity 0.1s',
+                        textAlign: 'center'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+                      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                     >
-                      {label}
+                      Apply Filter
                     </button>
-                  )
-                })}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {TIME_FILTERS.map(({ label }) => {
+                    const active = chartFilter === label
+                    return (
+                      <button
+                        key={label}
+                        onClick={() => {
+                          if (label === 'Custom') {
+                            setShowCustomCard(o => !o)
+                          } else {
+                            setChartFilter(label)
+                            setShowCustomCard(false)
+                          }
+                        }}
+                        style={{
+                          padding: '4px 10px',
+                          borderRadius: '5px',
+                          border: `1px solid ${active ? 'var(--accent-lime)' : 'var(--border-color)'}`,
+                          background: active ? 'rgba(var(--accent-lime-rgb), 0.16)' : 'transparent',
+                          color: active ? 'var(--accent-lime)' : 'var(--text-muted)',
+                          fontSize: '0.72rem',
+                          fontWeight: active ? '700' : '500',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          transition: 'all 0.12s',
+                        }}
+                      >
+                        {label === 'Custom' && chartFilter === 'Custom' ? `Custom: ${appliedMonths}M` : label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -330,6 +454,13 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
         <AddTradeModal
           onClose={() => setShowModal(false)}
           onTradeAdded={() => { refetch(); setShowModal(false); }}
+          onOpenImport={() => { setShowModal(false); setShowImportModal(true); }}
+        />
+      )}
+      {showImportModal && (
+        <ImportTradesModal
+          onClose={() => setShowImportModal(false)}
+          onTradesSaved={() => { refetch(); setShowImportModal(false); }}
         />
       )}
     </div>

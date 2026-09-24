@@ -4,6 +4,7 @@ import '../../assets/styles/colors.css'
 import '../../assets/styles/dashboard.css'
 import { useTradingData } from '../../hooks/useTradingData'
 import { formatCurrency } from '../../utils/formatters'
+import LoadingScreen from '../common/LoadingScreen'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   Cell, ScatterChart, Scatter, ReferenceLine,
@@ -187,11 +188,7 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
     return { maxWin, maxLoss, curWin, curLoss }
   }, [closedTrades])
 
-  if (loading) return (
-    <div className="dashboard-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-      <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Loading analytics...</p>
-    </div>
-  )
+  if (loading) return <LoadingScreen message="Loading analytics..." />
 
   if (error) return (
     <div className="dashboard-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>

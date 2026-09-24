@@ -1,9 +1,12 @@
 import { useState, useMemo } from 'react'
+import { FileImage, Plus, Download } from 'lucide-react'
 import '../../assets/styles/colors.css'
 import '../../assets/styles/dashboard.css'
 import { useTradingData } from '../../hooks/useTradingData'
 import TradeTable from '../trades/TradeTable'
 import AddTradeModal from '../trades/AddTradeModal'
+import ImportTradesModal from '../trades/ImportTradesModal'
+import LoadingScreen from '../common/LoadingScreen'
 
 /**
  * TradesPage
@@ -21,9 +24,10 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
     refetch,
   } = useTradingData(sessionReady, showDemoProp)
 
-  const [showModal,    setShowModal]    = useState(false)
-  const [symbolSearch, setSymbolSearch] = useState('')
-  const [sideFilter,   setSideFilter]   = useState('All') // All | Buy | Sell
+  const [showModal,       setShowModal]       = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [symbolSearch,    setSymbolSearch]    = useState('')
+  const [sideFilter,      setSideFilter]      = useState('All') // All | Buy | Sell
 
   // Apply demo filter (same pattern as Dashboard)
   const baseTrades = useMemo(
@@ -97,15 +101,7 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
   }
 
   if (loading) {
-    return (
-      <div className="dashboard-container" style={{
-        display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh',
-      }}>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', letterSpacing: '0.05em' }}>
-          Loading trades...
-        </p>
-      </div>
-    )
+    return <LoadingScreen message="Loading trades..." />
   }
 
   if (error) {
@@ -169,6 +165,29 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
                 <path d="M6.5 1v7M4 6l2.5 2.5L9 6M2 10h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               Export CSV
+            </button>
+            <button
+              onClick={() => setShowImportModal(true)}
+              style={{
+                backgroundColor: 'transparent',
+                color: 'var(--text-main)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '9px 18px',
+                fontWeight: '600',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'border-color 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-lime)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
+            >
+              <FileImage size={15} style={{ color: 'var(--accent-lime)' }} />
+              Import Screenshot
             </button>
             <button
               onClick={() => setShowModal(true)}
@@ -360,6 +379,13 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
         <AddTradeModal
           onClose={() => setShowModal(false)}
           onTradeAdded={() => { refetch(); setShowModal(false) }}
+          onOpenImport={() => { setShowModal(false); setShowImportModal(true) }}
+        />
+      )}
+      {showImportModal && (
+        <ImportTradesModal
+          onClose={() => setShowImportModal(false)}
+          onTradesSaved={() => { refetch(); setShowImportModal(false) }}
         />
       )}
     </div>

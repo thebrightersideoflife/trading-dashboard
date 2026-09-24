@@ -1,10 +1,27 @@
-export function formatCurrency(value) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value || 0)
+export function formatCurrency(value, currencyCode = 'USD') {
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyCode || 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value || 0)
+  } catch (err) {
+    return `${currencyCode || '$'}${Number(value || 0).toFixed(2)}`
+  }
+}
+
+export function getCurrencySymbol(currencyCode = 'USD') {
+  try {
+    const parts = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyCode || 'USD',
+    }).formatToParts(0)
+    const symbolPart = parts.find((p) => p.type === 'currency')
+    return symbolPart ? symbolPart.value : '$'
+  } catch (err) {
+    return '$'
+  }
 }
 
 export function formatPercent(value) {

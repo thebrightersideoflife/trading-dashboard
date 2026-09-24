@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useJournal } from '../../hooks/useJournal'
 import { useTradingData } from '../../hooks/useTradingData'
 import JournalDayPanel from './JournalDayPanel'
+import LoadingScreen from '../common/LoadingScreen'
 import { todayLocalDate, formatEntryDate, MOOD_LABELS, CONFIDENCE_LABELS } from '../../utils/journalConstants'
 import { formatCurrency } from '../../utils/formatters'
 
@@ -73,11 +74,7 @@ export default function JournalPage({ sessionReady = true, showDemoData = true }
 
   const today = todayLocalDate()
 
-  if (loading) return (
-    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'60vh' }}>
-      <p style={{ color:'var(--text-muted)', fontSize:'0.875rem' }}>Loading journal…</p>
-    </div>
-  )
+  if (loading) return <LoadingScreen message="Loading journal..." />
 
   if (journalError) return (
     <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'60vh' }}>

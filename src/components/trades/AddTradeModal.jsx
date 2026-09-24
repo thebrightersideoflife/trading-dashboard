@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { FileImage } from 'lucide-react'
 import { supabase } from '../../api/supabaseClient'
 
-export default function AddTradeModal({ onClose, onTradeAdded }) {
+export default function AddTradeModal({ onClose, onTradeAdded, onOpenImport }) {
   const [form, setForm] = useState({
     symbol: '',
     side: 'Buy',
@@ -100,7 +101,33 @@ export default function AddTradeModal({ onClose, onTradeAdded }) {
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>Add Trade</h2>
+          <div>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>Add Trade</h2>
+            {onOpenImport && (
+              <button
+                type="button"
+                onClick={() => { onClose(); onOpenImport(); }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--accent-lime)',
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  padding: 0,
+                  marginTop: '4px',
+                  fontWeight: '600',
+                  textDecoration: 'underline',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <FileImage size={13} />
+                Or import from broker screenshot
+              </button>
+            )}
+          </div>
           <button
             onClick={onClose}
             style={{
