@@ -11,6 +11,7 @@ import AnalyticsPage  from './components/analytics/AnalyticsPage.jsx';
 import JournalPage    from './components/journal/JournalPage.jsx';
 import HelpPage       from './components/help/HelpPage.jsx';
 import Footer         from './components/layout/Footer.jsx';
+import NotesPage      from './components/notes/NotesPage.jsx';
 
 function AppLayout({ user, profile, onProfileUpdate, showDemoData, onToggleDemoData, children }) {
   return (
@@ -239,6 +240,22 @@ export default function App() {
                 <JournalPage
                   sessionReady={sessionReady}
                   showDemoData={showDemoData}
+                />
+              )}
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/notes"
+          element={
+            <ProtectedRoute user={user} sessionReady={sessionReady}>
+              {layout(
+                <NotesPage
+                  sessionReady={sessionReady}
+                  showDemoData={showDemoData}
+                  currency={profile?.currency || 'USD'}
+                  profile={profile}
                 />
               )}
             </ProtectedRoute>

@@ -150,25 +150,26 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
           </h1>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
-              disabled
-              title="Import screenshot feature is temporarily disabled"
+              onClick={() => setShowImportModal(true)}
               style={{
                 backgroundColor: 'transparent',
-                color: 'var(--text-muted)',
+                color: 'var(--text-main)',
                 border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-sm)',
                 padding: '9px 18px',
                 fontWeight: '600',
                 fontSize: '0.85rem',
-                cursor: 'not-allowed',
-                opacity: 0.5,
+                cursor: 'pointer',
                 fontFamily: 'inherit',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
+                transition: 'border-color 0.15s',
               }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-lime)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
             >
-              <FileImage size={15} style={{ color: 'var(--text-muted)' }} />
+              <FileImage size={15} style={{ color: 'var(--accent-lime)' }} />
               Import Screenshot
             </button>
             <button
@@ -453,6 +454,7 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
         <AddTradeModal
           onClose={() => setShowModal(false)}
           onTradeAdded={() => { refetch(); setShowModal(false); }}
+          onOpenImport={() => { setShowModal(false); setShowImportModal(true); }}
         />
       )}
       {showImportModal && (

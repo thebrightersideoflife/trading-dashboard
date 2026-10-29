@@ -55,14 +55,6 @@ const PROMPT_TEXT =
 async function callGeminiWithFallbackAndRetry(apiKey, imageBase64, mimeType) {
   let lastError = null;
 
-  if (apiKey.startsWith('AQ.')) {
-    throw new Error(
-      'Invalid GEMINI_API_KEY format. Keys starting with "AQ." are Google Cloud OAuth tokens, not Google AI Studio keys. ' +
-      'Please get a free Google AI Studio API key (starts with "AIza...") from https://aistudio.google.com/app/apikey ' +
-      'and add GEMINI_API_KEY=AIza... to your .env file.'
-    );
-  }
-
   for (const model of CANDIDATE_MODELS) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
@@ -105,14 +97,11 @@ async function callGeminiWithFallbackAndRetry(apiKey, imageBase64, mimeType) {
         lastError = msg;
 
         if (res.status === 400 || res.status === 401 || res.status === 403) {
-          throw new Error(
-            `Gemini API Key Error (${res.status}): Please check GEMINI_API_KEY in .env. ` +
-            `Make sure it is a valid Google AI Studio key starting with "AIza..." (from https://aistudio.google.com/app/apikey). ${msg}`
-          );
+          throw new Error(`Gemini API Key Error (${res.status}): ${msg}`);
         }
 
         if (res.status === 429 || res.status === 503) {
-          console.warn(`[Gemini API 429/503 for ${model}] Rate limit reached. Trying fallback candidate model...`);
+          console.warn(`[Gemini API 429/503 for ${model}] Rate limit reached. Trying next candidate model...`);
           break;
         }
 
@@ -123,7 +112,7 @@ async function callGeminiWithFallbackAndRetry(apiKey, imageBase64, mimeType) {
 
         await new Promise((r) => setTimeout(r, 1000));
       } catch (err) {
-        if (err.message?.includes('Gemini API Key Error') || err.message?.includes('Invalid GEMINI_API_KEY')) throw err;
+        if (err.message?.includes('Gemini API Key Error')) throw err;
         lastError = err.message;
         await new Promise((r) => setTimeout(r, 1000));
       }

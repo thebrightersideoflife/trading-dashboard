@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { FileImage, Plus, Download } from 'lucide-react'
 import '../../assets/styles/colors.css'
 import '../../assets/styles/dashboard.css'
@@ -16,6 +17,7 @@ import LoadingScreen from '../common/LoadingScreen'
  *   showDemoData  — bool from App state
  */
 export default function TradesPage({ sessionReady = true, showDemoData: showDemoProp = true }) {
+  const [searchParams, setSearchParams] = useSearchParams()
   const {
     trades,
     showDemoData,
@@ -26,8 +28,15 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
 
   const [showModal,       setShowModal]       = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
-  const [symbolSearch,    setSymbolSearch]    = useState('')
+  const [symbolSearch,    setSymbolSearch]    = useState(() => searchParams.get('symbol') || '')
   const [sideFilter,      setSideFilter]      = useState('All') // All | Buy | Sell
+
+  useEffect(() => {
+    const urlSym = searchParams.get('symbol')
+    if (urlSym !== null && urlSym !== symbolSearch) {
+      setSymbolSearch(urlSym)
+    }
+  }, [searchParams])
 
   // Apply demo filter (same pattern as Dashboard)
   const baseTrades = useMemo(
@@ -167,25 +176,26 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
               Export CSV
             </button>
             <button
-              disabled
-              title="Import screenshot feature is temporarily disabled"
+              onClick={() => setShowImportModal(true)}
               style={{
                 backgroundColor: 'transparent',
-                color: 'var(--text-muted)',
+                color: 'var(--text-main)',
                 border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-sm)',
                 padding: '9px 18px',
                 fontWeight: '600',
                 fontSize: '0.875rem',
-                cursor: 'not-allowed',
-                opacity: 0.5,
+                cursor: 'pointer',
                 fontFamily: 'inherit',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
+                transition: 'border-color 0.15s',
               }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-lime)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
             >
-              <FileImage size={15} style={{ color: 'var(--text-muted)' }} />
+              <FileImage size={15} style={{ color: 'var(--accent-lime)' }} />
               Import Screenshot
             </button>
             <button
@@ -279,7 +289,12 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
               type="text"
               placeholder="Search symbol…"
               value={symbolSearch}
-              onChange={e => setSymbolSearch(e.target.value)}
+              onChange={e => {
+                const val = e.target.value
+                setSymbolSearch(val)
+                if (val) setSearchParams({ symbol: val }, { replace: true })
+                else setSearchParams({}, { replace: true })
+              }}
               style={{
                 width: '100%',
                 paddingLeft: '32px',
@@ -338,7 +353,11 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
           {/* Clear filters — only shown when active */}
           {(symbolSearch || sideFilter !== 'All') && (
             <button
-              onClick={() => { setSymbolSearch(''); setSideFilter('All') }}
+              onClick={() => {
+                setSymbolSearch('')
+                setSideFilter('All')
+                setSearchParams({}, { replace: true })
+              }}
               style={{
                 padding: '6px 12px',
                 background: 'transparent',
@@ -378,6 +397,7 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
         <AddTradeModal
           onClose={() => setShowModal(false)}
           onTradeAdded={() => { refetch(); setShowModal(false) }}
+          onOpenImport={() => { setShowModal(false); setShowImportModal(true) }}
         />
       )}
       {showImportModal && (

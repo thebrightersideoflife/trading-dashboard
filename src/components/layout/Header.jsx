@@ -9,6 +9,7 @@ const NAV_TABS = [
   { label: 'Trades',    path: '/trades',    available: true },
   { label: 'Analytics', path: '/analytics', available: true },
   { label: 'Journal',   path: '/journal',   available: true },
+  { label: 'Notes',     path: '/notes',     available: true },
   { label: 'Help',      path: '/help',      available: true },
 ];
 

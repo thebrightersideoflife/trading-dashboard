@@ -67,14 +67,6 @@ const LOADING_MESSAGES = [
 async function callGeminiDirectWithFallbackAndRetry(apiKey, imageBase64, mimeType, onStatusUpdate) {
   let lastError = null
 
-  if (apiKey.startsWith('AQ.')) {
-    throw new Error(
-      'Invalid GEMINI_API_KEY format. Keys starting with "AQ." are Google Cloud OAuth tokens, not Google AI Studio keys. ' +
-      'Please get a free Google AI Studio API key (starts with "AIza...") from https://aistudio.google.com/app/apikey ' +
-      'and set GEMINI_API_KEY=AIza... in your .env file.'
-    )
-  }
-
   for (const model of CANDIDATE_MODELS) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
@@ -121,10 +113,7 @@ async function callGeminiDirectWithFallbackAndRetry(apiKey, imageBase64, mimeTyp
         lastError = msg
 
         if (res.status === 400 || res.status === 401 || res.status === 403) {
-          throw new Error(
-            `Gemini API Key Error (${res.status}): Please check GEMINI_API_KEY in .env. ` +
-            `Make sure it is a valid Google AI Studio key starting with "AIza..." (from https://aistudio.google.com/app/apikey). ${msg}`
-          )
+          throw new Error(`Gemini API Key Error (${res.status}): ${msg}`)
         }
 
         if (res.status === 429 || res.status === 503) {
@@ -142,7 +131,7 @@ async function callGeminiDirectWithFallbackAndRetry(apiKey, imageBase64, mimeTyp
 
         await new Promise((r) => setTimeout(r, 1000))
       } catch (err) {
-        if (err.message?.includes('Gemini API Key Error') || err.message?.includes('Invalid GEMINI_API_KEY')) throw err
+        if (err.message?.includes('Gemini API Key Error')) throw err
         lastError = err.message
         await new Promise((r) => setTimeout(r, 1000))
       }
