@@ -9,6 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   Cell, ScatterChart, Scatter, ReferenceLine,
 } from 'recharts'
+import { BarChart3 } from 'lucide-react'
 
 /**
  * AnalyticsPage
@@ -219,9 +220,12 @@ export default function AnalyticsPage({ sessionReady = true, showDemoData: showD
         {/* ── Page header ──────────────────────────────────────────── */}
         <header style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: '700', letterSpacing: '-0.03em', color: 'var(--text-main)', margin: 0 }}>
-              Analytics
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <BarChart3 size={26} style={{ color: 'var(--accent-lime)' }} />
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '700', letterSpacing: '-0.03em', color: 'var(--text-main)', margin: 0 }}>
+                Analytics
+              </h1>
+            </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '5px' }}>
               {closedTrades.length} closed trades analysed
             </p>

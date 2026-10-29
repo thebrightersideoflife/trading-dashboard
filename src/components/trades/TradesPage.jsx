@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { FileImage, Plus, Download } from 'lucide-react'
+import { FileImage, Plus, Download, ArrowLeftRight } from 'lucide-react'
 import '../../assets/styles/colors.css'
 import '../../assets/styles/dashboard.css'
 import { useTradingData } from '../../hooks/useTradingData'
@@ -135,15 +135,18 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
           alignItems: 'center',
         }}>
           <div>
-            <h1 style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              letterSpacing: '-0.03em',
-              color: 'var(--text-main)',
-              margin: 0,
-            }}>
-              Trades
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <ArrowLeftRight size={26} style={{ color: 'var(--accent-lime)' }} />
+              <h1 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                letterSpacing: '-0.03em',
+                color: 'var(--text-main)',
+                margin: 0,
+              }}>
+                Trades
+              </h1>
+            </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '5px' }}>
               Full trade history · edit and delete inline
             </p>

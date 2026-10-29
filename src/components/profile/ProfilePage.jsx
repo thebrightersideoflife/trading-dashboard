@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { UserCog } from 'lucide-react';
 import '../../assets/styles/colors.css';
 import '../../assets/styles/dashboard.css';
 import { supabase } from '../../api/supabaseClient';
@@ -118,9 +119,12 @@ export default function ProfilePage({
 
       {/* Page title */}
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-0.03em', margin: 0 }}>
-          Profile Settings
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <UserCog size={26} style={{ color: 'var(--accent-lime)' }} />
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-0.03em', margin: 0 }}>
+            Profile Settings
+          </h1>
+        </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '6px' }}>
           Configure your account defaults. Changes apply globally to all calculations.
         </p>

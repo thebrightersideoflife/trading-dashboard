@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { BookOpen } from 'lucide-react'
 import { useJournal } from '../../hooks/useJournal'
 import { useTradingData } from '../../hooks/useTradingData'
 import JournalDayPanel from './JournalDayPanel'
@@ -94,9 +95,12 @@ export default function JournalPage({ sessionReady = true, showDemoData = true }
         {/* Page header */}
         <header style={{ marginBottom:'2rem', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <div>
-            <h1 style={{ fontSize:'1.5rem', fontWeight:'700', letterSpacing:'-0.03em', color:'var(--text-main)', margin:0 }}>
-              Trading Journal
-            </h1>
+            <div style={{ display:'flex', alignItems:'center', gap:'0.6rem' }}>
+              <BookOpen size={26} style={{ color:'var(--accent-lime)' }} />
+              <h1 style={{ fontSize:'1.5rem', fontWeight:'700', letterSpacing:'-0.03em', color:'var(--text-main)', margin:0 }}>
+                Trading Journal
+              </h1>
+            </div>
             <p style={{ color:'var(--text-muted)', fontSize:'0.85rem', marginTop:'5px' }}>
               {entries.length} entr{entries.length === 1 ? 'y' : 'ies'} written
             </p>

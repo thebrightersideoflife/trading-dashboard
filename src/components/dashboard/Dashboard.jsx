@@ -5,7 +5,7 @@ import { useTradingData } from '../../hooks/useTradingData'
 import StatCard from './StatCard'
 import MainChart from './MainChart'
 import ProfitGauge from './ProfitGauge'
-import { FileImage } from 'lucide-react'
+import { FileImage, LayoutDashboard } from 'lucide-react'
 import TradeTable from '../trades/TradeTable'
 import AddTradeModal from '../trades/AddTradeModal'
 import ImportTradesModal from '../trades/ImportTradesModal'
@@ -140,14 +140,18 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
           justifyContent: 'space-between',
           alignItems: 'center',
         }}>
-          <h1 style={{
-            fontSize: '1.5rem',
-            fontWeight: '700',
-            letterSpacing: '-0.03em',
-            color: 'var(--text-main)',
-          }}>
-            Account Overview
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <LayoutDashboard size={26} style={{ color: 'var(--accent-lime)' }} />
+            <h1 style={{
+              fontSize: '1.5rem',
+              fontWeight: '700',
+              letterSpacing: '-0.03em',
+              color: 'var(--text-main)',
+              margin: 0,
+            }}>
+              Account Overview
+            </h1>
+          </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
               disabled

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { HelpCircle } from 'lucide-react'
 import '../../assets/styles/colors.css'
 import '../../assets/styles/dashboard.css'
 
@@ -9,6 +10,7 @@ const SECTIONS = [
   { id: 'calendar',        label: 'Calendar'         },
   { id: 'journal',         label: 'Journal'          },
   { id: 'analytics',       label: 'Analytics'        },
+  { id: 'notes',           label: 'Notes'            },
   { id: 'demo-data',       label: 'Demo Data'        },
   { id: 'learning',        label: 'Learning Path'    },
 ]
@@ -31,26 +33,22 @@ export default function HelpPage() {
           position: 'relative',
           overflow: 'hidden',
         }}>
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'var(--gradient-subtle)',
-            pointerEvents: 'none',
-          }} />
-          <h1 style={{
-            fontSize: '1.7rem',
-            fontWeight: '700',
-            letterSpacing: '-0.03em',
-            color: 'var(--text-main)',
-            margin: 0,
-            position: 'relative',
-          }}>
-            Help & Guide
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', position: 'relative' }}>
+            <HelpCircle size={28} style={{ color: 'var(--accent-lime)' }} />
+            <h1 style={{
+              fontSize: '1.7rem',
+              fontWeight: '700',
+              letterSpacing: '-0.03em',
+              color: 'var(--text-main)',
+              margin: 0,
+            }}>
+              Help & Guide
+            </h1>
+          </div>
           <p style={{
             color: 'var(--text-muted)',
             fontSize: '0.95rem',
-            margin: '6px 0 0',
+            margin: '6px 0 0 2.35rem',
             position: 'relative',
           }}>
             Master CogentLog — from first trade to consistent profitability
@@ -259,6 +257,22 @@ export default function HelpPage() {
                 <H2>Progress</H2>
                 <P>Answers: <em style={{ color: 'var(--text-muted)' }}>am I getting better over time?</em></P>
                 <P>Monthly P&L bars show trajectory clearly. The drawdown chart shows how far your equity fell from its peak at every point in your trading history — useful for understanding your worst periods and recovery time.</P>
+              </Section>
+            )}
+
+            {active === 'notes' && (
+              <Section title="Notes">
+                <P>The <Strong>Notes</Strong> tab is your dedicated workspace for trading strategies, asset analyses, playbooks, and psychological checklists.</P>
+
+                <H2>Organising your notes</H2>
+                <P>Create custom note notebooks and pages to keep your trading research structured. Use rich formatting and color accents to highlight key setups, levels, and trading rules.</P>
+
+                <H2>Asset-specific notes</H2>
+                <P>Link notes directly to specific instruments (e.g. EURUSD, BTCUSDT) so your technical plans and price levels are immediately accessible when reviewing or planning trades.</P>
+
+                <Callout color="lime">
+                  <Strong>Pro Tip:</Strong> Keep your trading rules and pre-market checklist pinned in your Notes so you can review them before every session.
+                </Callout>
               </Section>
             )}
 

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Calendar } from 'lucide-react';
 import { useJournal } from '../../hooks/useJournal';
 import JournalSidePanel from '../journal/JournalSidePanel';
 import '../../assets/styles/colors.css';
@@ -171,9 +172,12 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
           {/* Page header */}
           <div style={{ marginBottom: '1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h1 style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-0.03em', margin: 0 }}>
-                Trade Calendar
-              </h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Calendar size={26} style={{ color: 'var(--accent-lime)' }} />
+                <h1 style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-0.03em', margin: 0 }}>
+                  Trade Calendar
+                </h1>
+              </div>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginTop: '5px' }}>
                 Daily P&L heatmap · Weekly targets
               </p>

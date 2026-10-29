@@ -1,9 +1,9 @@
 :root {
   /* ── Backgrounds ──────────────────────────────────────────────── */
   --bg-main:          #0a0a0f;   /* Page background — near black with a blue tint */
-  --bg-card:          #111118;   /* Card / panel surface */
-  --bg-card-hover:    #222232;   /* Card hover state — brightened for daylight visibility */
-  --bg-input:         #0d0d14;   /* Form input fill */
+  --bg-card:          rgba(17, 17, 24, 0.62);   /* Card / panel surface — more translucent glass */
+  --bg-card-hover:    rgba(34, 34, 50, 0.75);   /* Card hover state — more translucent glass */
+  --bg-input:         rgba(13, 13, 20, 0.68);   /* Form input fill — more translucent glass */
 
   /* ── Borders ──────────────────────────────────────────────────── */
   --border-color:     #252538;   /* Enhanced contrast divider lines */
