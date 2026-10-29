@@ -12,21 +12,51 @@ import JournalPage    from './components/journal/JournalPage.jsx';
 import HelpPage       from './components/help/HelpPage.jsx';
 import Footer         from './components/layout/Footer.jsx';
 import NotesPage      from './components/notes/NotesPage.jsx';
+import TradingBackdrop from './components/common/TradingBackdrop';
 
 function AppLayout({ user, profile, onProfileUpdate, showDemoData, onToggleDemoData, children }) {
+  const themeColor = profile?.theme_color || '#25D366';
+  const cleanHex = themeColor.replace('#', '');
+  const r = parseInt(cleanHex.substring(0, 2), 16) || 37;
+  const g = parseInt(cleanHex.substring(2, 4), 16) || 211;
+  const b = parseInt(cleanHex.substring(4, 6), 16) || 102;
+  const themeRgb = `${r}, ${g}, ${b}`;
+
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-main)', display: 'flex', flexDirection: 'column' }}>
-      <Header
-        user={user}
-        profile={profile}
-        onProfileUpdate={onProfileUpdate}
-        showMockData={showDemoData}
-        onToggleMockData={onToggleDemoData}
-      />
-      <main style={{ flex: 1 }}>
-        {children}
-      </main>
-      <Footer />
+    <div style={{
+      minHeight: '100vh',
+      background: 'transparent',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      zIndex: 1,
+      overflowX: 'hidden',
+    }}>
+      {/* Theme-based back light hero illuminating the system based on database profile theme color */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '600px',
+        background: `radial-gradient(ellipse at top, rgba(${themeRgb}, 0.38) 0%, rgba(${themeRgb}, 0.15) 35%, rgba(${themeRgb}, 0.04) 65%, transparent 85%)`,
+        pointerEvents: 'none',
+        zIndex: 0,
+      }} />
+
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <Header
+          user={user}
+          profile={profile}
+          onProfileUpdate={onProfileUpdate}
+          showMockData={showDemoData}
+          onToggleMockData={onToggleDemoData}
+        />
+        <main style={{ flex: 1 }}>
+          {children}
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 }
@@ -166,7 +196,9 @@ export default function App() {
       '--accent-lime': themeColor,
       '--accent-lime-rgb': rgbChannels,
       minHeight: '100vh',
+      position: 'relative',
     }}>
+      <TradingBackdrop />
       <BrowserRouter>
         <Routes>
 

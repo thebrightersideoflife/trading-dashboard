@@ -11,7 +11,7 @@ export default function Footer() {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      background: 'var(--bg-main)',
+      background: 'transparent',
       flexWrap: 'wrap',
       gap: '8px',
     }}>

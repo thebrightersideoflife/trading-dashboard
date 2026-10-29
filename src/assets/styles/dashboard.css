@@ -11,7 +11,7 @@
 .dashboard-container {
   padding: 2rem 2rem 4rem;
   min-height: calc(100vh - var(--header-height));
-  background: var(--bg-main);
+  background: transparent;
 }
 
 /* ── Stat cards: 5-col default, responsive down to 1 ───────── */

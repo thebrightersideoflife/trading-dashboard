@@ -87,7 +87,7 @@ export default function JournalPage({ sessionReady = true, showDemoData = true }
     <div style={{
       padding:'2rem 2rem 4rem',
       minHeight:'calc(100vh - 70px)',
-      background:'var(--bg-main)',
+      background:'transparent',
     }}>
       <div style={{ maxWidth:'1400px', margin:'0 auto' }}>
 

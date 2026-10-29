@@ -150,27 +150,37 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
           </h1>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
-              onClick={() => setShowImportModal(true)}
+              disabled
               style={{
                 backgroundColor: 'transparent',
-                color: 'var(--text-main)',
+                color: 'var(--text-muted)',
                 border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-sm)',
                 padding: '9px 18px',
                 fontWeight: '600',
                 fontSize: '0.85rem',
-                cursor: 'pointer',
+                cursor: 'not-allowed',
                 fontFamily: 'inherit',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                transition: 'border-color 0.15s',
+                opacity: 0.7,
               }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-lime)'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
             >
-              <FileImage size={15} style={{ color: 'var(--accent-lime)' }} />
+              <FileImage size={15} style={{ color: 'var(--text-muted)' }} />
               Import Screenshot
+              <span style={{
+                fontSize: '0.7rem',
+                backgroundColor: 'var(--bg-card)',
+                color: 'var(--text-muted)',
+                border: '1px solid var(--border-color)',
+                padding: '1px 6px',
+                borderRadius: '4px',
+                fontWeight: '500',
+                marginLeft: '4px',
+              }}>
+                Coming Soon
+              </span>
             </button>
             <button
               onClick={() => setShowModal(true)}

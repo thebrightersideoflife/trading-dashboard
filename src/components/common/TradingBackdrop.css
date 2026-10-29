@@ -1,0 +1,24 @@
+.trading-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.42;
+  transition: opacity 0.3s ease;
+}
+
+.trading-backdrop canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+:root {
+  --tb-up: var(--accent-lime);
+  --tb-down: var(--color-loss);
+  --tb-grid: var(--border-color);
+  --tb-text: var(--text-muted);
+  --tb-accent: var(--accent-blue);
+  --tb-tag-text: #ffffff;
+}
