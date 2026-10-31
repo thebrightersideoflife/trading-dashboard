@@ -134,12 +134,7 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
         )}
 
         {/* ── Page Header ───────────────────────────────────────── */}
-        <header style={{
-          marginBottom: '2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}>
+        <header className="page-header-row">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <LayoutDashboard size={26} style={{ color: 'var(--accent-lime)' }} />
             <h1 style={{
@@ -152,7 +147,7 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
               Account Overview
             </h1>
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="page-header-actions">
             <button
               disabled
               style={{
@@ -283,23 +278,29 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
         </div>
 
         {/* ── Equity Curve ──────────────────────────────────────── */}
-        <div style={{
-          marginTop: '1.75rem',
-          backgroundColor: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius-xl)',
-          height: '420px',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          boxShadow: 'var(--card-shadow)',
-        }}>
-          <div style={{
-            padding: '20px 26px 0 26px',
+        <div
+          className="equity-card"
+          style={{
+            marginTop: '1.75rem',
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--radius-xl)',
+            height: '420px',
             display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-          }}>
+            flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: 'var(--card-shadow)',
+          }}
+        >
+          <div
+            className="equity-card-header"
+            style={{
+              padding: '20px 26px 0 26px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+            }}
+          >
             <div>
               <h2 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '4px', color: 'var(--text-main)' }}>
                 Account Balance
@@ -309,8 +310,8 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
               </p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
-              <div style={{ textAlign: 'right' }}>
+            <div className="equity-card-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+              <div className="equity-card-balance" style={{ textAlign: 'right' }}>
                 <div style={{
                   color: 'var(--accent-lime)',
                   fontSize: '1.5rem',
@@ -319,7 +320,7 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
                 }}>
                   {formatCurrency(m.current_balance)}
                 </div>
-                <div style={{ display: 'flex', gap: '18px', justifyContent: 'flex-end', marginTop: '6px' }}>
+                <div className="equity-card-pnl-row" style={{ display: 'flex', gap: '18px', justifyContent: 'flex-end', marginTop: '6px' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                     Current P&L{' '}
                     <span style={{
@@ -339,7 +340,7 @@ export default function Dashboard({ sessionReady = true, showDemoData: showDemoP
               </div>
 
               {/* ── Time filter pills ── */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+              <div className="equity-card-pills" style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
 
                 {showCustomCard && (
                   <div

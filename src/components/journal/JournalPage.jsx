@@ -93,7 +93,7 @@ export default function JournalPage({ sessionReady = true, showDemoData = true }
       <div style={{ maxWidth:'1400px', margin:'0 auto' }}>
 
         {/* Page header */}
-        <header style={{ marginBottom:'2rem', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <header className="page-header-row">
           <div>
             <div style={{ display:'flex', alignItems:'center', gap:'0.6rem' }}>
               <BookOpen size={26} style={{ color:'var(--accent-lime)' }} />

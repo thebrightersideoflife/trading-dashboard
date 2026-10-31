@@ -51,7 +51,9 @@ export default function AddTradeModal({ onClose, onTradeAdded, onOpenImport }) {
   /* ── Shared input style ───────────────────────────────────────────── */
   const inputStyle = {
     width: '100%',
-    padding: '10px 14px',
+    maxWidth: '100%',
+    minWidth: 0,
+    padding: '10px 12px',
     backgroundColor: '#0d0d12',
     border: '1px solid var(--border-color)',
     borderRadius: '8px',
@@ -71,7 +73,7 @@ export default function AddTradeModal({ onClose, onTradeAdded, onOpenImport }) {
     letterSpacing: '0.05em',
   }
 
-  const fieldStyle = { display: 'flex', flexDirection: 'column' }
+  const fieldStyle = { display: 'flex', flexDirection: 'column', minWidth: 0 }
 
   return (
     /* ── Backdrop ───────────────────────────────────────────────────── */
@@ -79,44 +81,51 @@ export default function AddTradeModal({ onClose, onTradeAdded, onOpenImport }) {
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        backdropFilter: 'blur(4px)',
+        backgroundColor: 'rgba(0,0,0,0.75)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
         display: 'flex', justifyContent: 'center', alignItems: 'center',
         zIndex: 1000,
+        padding: '16px',
       }}
     >
       {/* ── Modal ─────────────────────────────────────────────────── */}
       <div
         onClick={(e) => e.stopPropagation()}
+        className="add-trade-modal-card"
         style={{
           backgroundColor: 'var(--bg-card)',
           border: '1px solid var(--border-color)',
           borderRadius: '16px',
-          padding: '28px',
-          width: '100%',
-          maxWidth: '460px',
+          padding: '24px',
+          width: '92%',
+          maxWidth: '480px',
+          maxHeight: '88vh',
+          overflowY: 'auto',
           boxShadow: 'var(--card-shadow)',
           color: 'var(--text-main)',
+          boxSizing: 'border-box',
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div>
             <h2 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>Add Trade</h2>
             {onOpenImport && (
               <button
                 type="button"
-                onClick={() => { onClose(); onOpenImport(); }}
+                disabled
+                title="Broker screenshot import is currently disabled"
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--accent-lime)',
+                  color: 'var(--text-muted)',
                   fontSize: '0.78rem',
-                  cursor: 'pointer',
+                  cursor: 'not-allowed',
+                  opacity: 0.5,
                   padding: 0,
                   marginTop: '4px',
                   fontWeight: '600',
-                  textDecoration: 'underline',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
@@ -124,7 +133,7 @@ export default function AddTradeModal({ onClose, onTradeAdded, onOpenImport }) {
                 }}
               >
                 <FileImage size={13} />
-                Or import from broker screenshot
+                Or import from broker screenshot (Coming soon)
               </button>
             )}
           </div>
@@ -144,7 +153,7 @@ export default function AddTradeModal({ onClose, onTradeAdded, onOpenImport }) {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
           {/* Symbol + Side */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="add-trade-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div style={fieldStyle}>
               <label style={labelStyle}>Symbol</label>
               <input
@@ -166,7 +175,7 @@ export default function AddTradeModal({ onClose, onTradeAdded, onOpenImport }) {
           </div>
 
           {/* Open / Close Time */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="add-trade-time-grid">
             <div style={fieldStyle}>
               <label style={labelStyle}>Open Time</label>
               <input
@@ -186,7 +195,7 @@ export default function AddTradeModal({ onClose, onTradeAdded, onOpenImport }) {
           </div>
 
           {/* Entry / Exit Price */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="add-trade-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div style={fieldStyle}>
               <label style={labelStyle}>Entry Price</label>
               <input
@@ -206,7 +215,7 @@ export default function AddTradeModal({ onClose, onTradeAdded, onOpenImport }) {
           </div>
 
           {/* Quantity / Fees / Swap */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+          <div className="add-trade-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
             <div style={fieldStyle}>
               <label style={labelStyle}>Quantity</label>
               <input

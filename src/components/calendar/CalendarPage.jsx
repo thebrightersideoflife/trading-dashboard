@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { useJournal } from '../../hooks/useJournal';
 import JournalSidePanel from '../journal/JournalSidePanel';
@@ -9,11 +9,25 @@ import { formatCurrency } from '../../utils/formatters';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return isMobile;
+}
+
 /**
  * Format P&L for calendar cell display to match compact screenshot style:
  * e.g., +$1.2k, +$12k, +$9.1k, +$4.0k, +$17k, +$18k, +$22k, +$23k, +$19k, +$3.9k
  */
-function formatCalendarPnl(pnl) {
+function formatCalendarPnl(pnl, isMobile = false) {
   if (pnl == null || pnl === 0) return null;
   const abs = Math.abs(pnl);
   const sign = pnl >= 0 ? '+' : '−';
@@ -25,15 +39,8 @@ function formatCalendarPnl(pnl) {
   return `${sign}$${abs.toFixed(0)}`;
 }
 
-/**
- * CalendarPage
- * Full-page calendar view with:
- * - Daily P&L heatmap cells
- * - Weekly target progress bars (per-week target stored in Supabase or localStorage)
- * - Month navigator + summary strip
- * - Inline weekly target override editor
- */
 export default function CalendarPage({ sessionReady, profile, showDemoData }) {
+  const isMobile = useIsMobile();
   const { dailyPnl, weekTargets, upsertWeekTarget, trades } = useTradingData(sessionReady, showDemoData);
 
   const {
@@ -168,35 +175,28 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
   return (
     <>
       <div className="dashboard-container">
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
           {/* Page header */}
-          <div style={{ marginBottom: '1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="page-header-row">
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <Calendar size={26} style={{ color: 'var(--accent-lime)' }} />
-                <h1 style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-0.03em', margin: 0 }}>
+                <Calendar size={isMobile ? 22 : 26} style={{ color: 'var(--accent-lime)' }} />
+                <h1 style={{ fontSize: isMobile ? '1.25rem' : '1.4rem', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-0.03em', margin: 0 }}>
                   Trade Calendar
                 </h1>
               </div>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginTop: '5px' }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: isMobile ? '0.78rem' : '0.82rem', marginTop: '4px' }}>
                 Daily P&L heatmap · Weekly targets
               </p>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <NavBtn onClick={prevMonth}>&#8592;</NavBtn>
-              <span style={{ minWidth: '155px', textAlign: 'center', fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-main)' }}>
-                {monthLabel}
-              </span>
-              <NavBtn onClick={nextMonth}>&#8594;</NavBtn>
             </div>
           </div>
 
           {/* Month summary strip */}
           <div style={{
-            display: 'flex',
-            gap: '1rem',
-            marginBottom: '1.5rem',
-            flexWrap: 'wrap',
+            display: 'grid',
+            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(130px, 1fr))',
+            gap: isMobile ? '8px' : '1rem',
+            marginBottom: isMobile ? '1rem' : '1.5rem',
           }}>
             {[
               { label: 'Month P&L', value: formatCurrency(monthTotal), color: monthTotal >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)' },
@@ -205,47 +205,175 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
               { label: 'Loss Days', value: lossDays, color: 'var(--color-loss)' },
             ].map(({ label, value, color }) => (
               <div key={label} style={{
-                flex: '1 1 120px',
                 background: 'var(--bg-card)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '10px',
-                padding: '14px 18px',
+                padding: isMobile ? '10px 12px' : '14px 18px',
               }}>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: '600', marginBottom: '4px' }}>
+                <div style={{ fontSize: isMobile ? '0.62rem' : '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600', marginBottom: '3px' }}>
                   {label}
                 </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: '700', color }}>
+                <div style={{ fontSize: isMobile ? '1.1rem' : '1.25rem', fontWeight: '700', color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {value}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Calendar grid */}
+          {/* Calendar grid container */}
           <div style={{
             background: 'var(--bg-card)',
             border: '1px solid var(--border-color)',
             borderRadius: '14px',
             overflow: 'hidden',
+            width: '100%',
           }}>
-            {/* Weekday headers */}
-            <div className="calendar-header-grid" style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr repeat(7, 1fr)',
-              gap: '6px',
-              padding: '14px 16px 8px',
+            {/* Calendar Card Header: Far-Left / Far-Right Nav Buttons & Centered Month */}
+            <div style={{
+              padding: isMobile ? '12px 14px' : '16px 20px',
               borderBottom: '1px solid var(--border-color)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              background: 'rgba(255, 255, 255, 0.015)',
             }}>
-              <div className="calendar-week-col" />
+              {/* Far-Left Corner Previous Month Button */}
+              <button
+                onClick={prevMonth}
+                aria-label="Previous month"
+                title="Previous month"
+                style={{
+                  width: isMobile ? '42px' : '48px',
+                  height: isMobile ? '42px' : '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '10px',
+                  color: 'var(--text-main)',
+                  cursor: 'pointer',
+                  fontSize: '1.25rem',
+                  fontWeight: '700',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.15s ease',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'var(--accent-lime)';
+                  e.currentTarget.style.color = 'var(--accent-lime)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'var(--border-color)';
+                  e.currentTarget.style.color = 'var(--text-main)';
+                }}
+              >
+                &#8592;
+              </button>
+
+              {/* Centered Month & Year Label + Current Month Link */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '3px',
+                textAlign: 'center',
+                flex: 1,
+                padding: '0 12px',
+              }}>
+                <h2 style={{
+                  fontSize: isMobile ? '1.2rem' : '1.5rem',
+                  fontWeight: '700',
+                  color: 'var(--text-main)',
+                  margin: 0,
+                  letterSpacing: '-0.02em',
+                  textAlign: 'center',
+                }}>
+                  {monthLabel}
+                </h2>
+
+                {(viewYear !== today.getFullYear() || viewMonth !== today.getMonth()) && (
+                  <button
+                    onClick={() => { setViewYear(today.getFullYear()); setViewMonth(today.getMonth()); }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--accent-lime)',
+                      fontSize: '0.8rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      padding: 0,
+                      textDecoration: 'underline',
+                      fontFamily: 'inherit',
+                      marginTop: '2px',
+                      transition: 'opacity 0.15s ease',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                  >
+                    Current Month
+                  </button>
+                )}
+              </div>
+
+              {/* Far-Right Corner Next Month Button */}
+              <button
+                onClick={nextMonth}
+                aria-label="Next month"
+                title="Next month"
+                style={{
+                  width: isMobile ? '42px' : '48px',
+                  height: isMobile ? '42px' : '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '10px',
+                  color: 'var(--text-main)',
+                  cursor: 'pointer',
+                  fontSize: '1.25rem',
+                  fontWeight: '700',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.15s ease',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'var(--accent-lime)';
+                  e.currentTarget.style.color = 'var(--accent-lime)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'var(--border-color)';
+                  e.currentTarget.style.color = 'var(--text-main)';
+                }}
+              >
+                &#8594;
+              </button>
+            </div>
+            {/* Weekday headers */}
+            <div
+              className="calendar-header-grid"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? 'repeat(7, 1fr)' : '100px repeat(7, 1fr)',
+                gap: isMobile ? '3px' : '6px',
+                padding: isMobile ? '10px 6px 6px' : '14px 16px 8px',
+                borderBottom: '1px solid var(--border-color)',
+              }}
+            >
+              {!isMobile && <div className="calendar-week-col" />}
               {WEEKDAYS.map(d => (
                 <div key={d} style={{
                   textAlign: 'center',
-                  fontSize: '0.95rem',
+                  fontSize: isMobile ? '0.72rem' : '0.95rem',
                   fontWeight: '700',
                   color: 'var(--text-main)',
-                  letterSpacing: '0.05em',
+                  letterSpacing: '0.03em',
                   textTransform: 'uppercase',
-                  padding: '6px 0',
+                  padding: isMobile ? '2px 0' : '6px 0',
                 }}>
                   {d}
                 </div>
@@ -253,68 +381,73 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
             </div>
 
             {/* Week rows */}
-            <div style={{ padding: '10px 16px 16px' }}>
+            <div style={{ padding: isMobile ? '6px' : '10px 16px 16px' }}>
               {rows.map(({ weekKey, weekStart, cells, weekPnl, weekTarget }) => {
                 const progress = weekTarget > 0 ? Math.min(weekPnl / weekTarget, 1) : 0;
                 const isEditing = editingWeek === weekKey;
                 const ahead = weekPnl >= weekTarget;
 
                 return (
-                  <div key={weekKey} style={{ marginBottom: '10px' }}>
+                  <div key={weekKey} style={{ marginBottom: isMobile ? '6px' : '10px' }}>
                     {/* Day cells row */}
-                    <div className="calendar-row-grid" style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr repeat(7, 1fr)',
-                      gap: '6px',
-                      marginBottom: '5px',
-                    }}>
-                      {/* Weekly target column */}
-                      <div className="calendar-week-col" style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        paddingRight: '4px',
-                      }}>
-                        {isEditing ? (
-                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                            <input
-                              autoFocus
-                              type="number"
-                              value={editTarget}
-                              onChange={e => setEditTarget(e.target.value)}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') saveWeekTarget(weekStart);
-                                if (e.key === 'Escape') setEditingWeek(null);
-                              }}
-                              style={{
-                                width: '70px',
-                                background: 'var(--bg-main)',
-                                border: '1px solid var(--accent-lime)',
-                                borderRadius: '5px',
-                                color: 'var(--text-main)',
-                                fontSize: '0.72rem',
-                                padding: '4px 6px',
-                                outline: 'none',
-                                fontFamily: 'inherit',
-                              }}
+                    <div
+                      className="calendar-row-grid"
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: isMobile ? 'repeat(7, 1fr)' : '100px repeat(7, 1fr)',
+                        gap: isMobile ? '3px' : '6px',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      {/* Weekly target column (Desktop only) */}
+                      {!isMobile && (
+                        <div className="calendar-week-col" style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                          paddingRight: '4px',
+                        }}>
+                          {isEditing ? (
+                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                              <input
+                                autoFocus
+                                type="number"
+                                value={editTarget}
+                                onChange={e => setEditTarget(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') saveWeekTarget(weekStart);
+                                  if (e.key === 'Escape') setEditingWeek(null);
+                                }}
+                                style={{
+                                  width: '70px',
+                                  background: 'var(--bg-main)',
+                                  border: '1px solid var(--accent-lime)',
+                                  borderRadius: '5px',
+                                  color: 'var(--text-main)',
+                                  fontSize: '0.72rem',
+                                  padding: '4px 6px',
+                                  outline: 'none',
+                                  fontFamily: 'inherit',
+                                }}
+                              />
+                              <button
+                                onClick={() => saveWeekTarget(weekStart)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-lime)', padding: '2px', fontSize: '0.7rem' }}
+                              >✓</button>
+                            </div>
+                          ) : (
+                            <WeekTargetButton
+                              weekTarget={weekTarget}
+                              ahead={ahead}
+                              onClick={() => { setEditingWeek(weekKey); setEditTarget(String(weekTarget)); }}
                             />
-                            <button
-                              onClick={() => saveWeekTarget(weekStart)}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-lime)', padding: '2px', fontSize: '0.7rem' }}
-                            >✓</button>
-                          </div>
-                        ) : (
-                          <WeekTargetButton
-                            weekTarget={weekTarget}
-                            ahead={ahead}
-                            onClick={() => { setEditingWeek(weekKey); setEditTarget(String(weekTarget)); }}
-                          />
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Day cells */}
                       {cells.map((cell, i) => {
-                        if (!cell) return <div key={`empty-${weekKey}-${i}`} />;
+                        if (!cell) return <div key={`empty-${weekKey}-${i}`} style={{ background: 'transparent' }} />;
                         const { dayNum, key, data, isToday } = cell;
                         const pnl = data?.total_pnl ?? null;
                         const tradesCount = data?.trades ?? 0;
@@ -325,25 +458,23 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
                             key={key}
                             onClick={() => setSelectedDate(key)}
                             style={{
-                              aspectRatio: '1.1 / 1',
-                              minHeight: '110px',
+                              minHeight: isMobile ? '60px' : '110px',
                               background: cellBg(pnl),
                               border: `2px solid ${isSelected ? themeColor : (isToday ? 'var(--accent-lime)' : cellBorder(pnl))}`,
-                              borderRadius: '8px',
+                              borderRadius: isMobile ? '6px' : '8px',
                               display: 'flex',
                               flexDirection: 'column',
                               justifyContent: 'space-between',
                               alignItems: 'flex-start',
-                              padding: '12px 14px',
+                              padding: isMobile ? '5px 4px' : '12px 14px',
                               transition: 'transform 0.1s, border-color 0.1s',
                               cursor: 'pointer',
                               boxSizing: 'border-box',
                               position: 'relative',
-                              boxShadow: isSelected ? '0 0 12px rgba(var(--accent-lime-rgb), 0.4)' : 'none',
+                              boxShadow: isSelected ? '0 0 10px rgba(var(--accent-lime-rgb), 0.4)' : 'none',
                               zIndex: isSelected ? 2 : 1,
+                              overflow: 'hidden',
                             }}
-                            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
-                            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                           >
                             {/* Row 1: day number (top-left) + today/journal dots (top-right) */}
                             <div style={{
@@ -353,18 +484,18 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
                               width: '100%',
                             }}>
                               <span style={{
-                                fontSize: '1.25rem',
+                                fontSize: isMobile ? '0.82rem' : '1.25rem',
                                 fontWeight: '700',
                                 color: isToday ? 'var(--accent-lime)' : 'var(--text-main)',
                                 lineHeight: 1,
                               }}>
                                 {dayNum}
                               </span>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                                 {isToday && (
                                   <span style={{
-                                    width: '7px',
-                                    height: '7px',
+                                    width: isMobile ? '5px' : '7px',
+                                    height: isMobile ? '5px' : '7px',
                                     borderRadius: '50%',
                                     background: 'var(--accent-lime)',
                                     display: 'inline-block',
@@ -373,8 +504,8 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
                                 )}
                                 {!isToday && getEntryForDate(key) && (
                                   <span title="Journal entry" style={{
-                                    width: '6px',
-                                    height: '6px',
+                                    width: isMobile ? '5px' : '6px',
+                                    height: isMobile ? '5px' : '6px',
                                     borderRadius: '50%',
                                     background: '#74c0fc',
                                     display: 'inline-block',
@@ -384,22 +515,22 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
                               </div>
                             </div>
 
-                            {/* Bottom-Left Data Stack */}
+                            {/* Bottom Data Stack */}
                             <div style={{
                               display: 'flex',
                               flexDirection: 'column',
                               alignItems: 'flex-start',
                               justifyContent: 'flex-end',
-                              gap: '3px',
+                              gap: isMobile ? '1px' : '3px',
                               width: '100%',
                               marginTop: 'auto',
                             }}>
                               {pnl != null && (
                                 <span style={{
-                                  fontSize: 'clamp(1.1rem, 1.35vw, 1.45rem)',
+                                  fontSize: isMobile ? 'clamp(0.68rem, 2.7vw, 0.88rem)' : 'clamp(1.1rem, 1.35vw, 1.45rem)',
                                   fontWeight: '700',
                                   color: pnl >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)',
-                                  lineHeight: 1.15,
+                                  lineHeight: 1.1,
                                   maxWidth: '100%',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
@@ -407,19 +538,20 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
                                   textAlign: 'left',
                                   letterSpacing: '-0.02em',
                                 }}>
-                                  {formatCalendarPnl(pnl)}
+                                  {formatCalendarPnl(pnl, isMobile)}
                                 </span>
                               )}
                               {tradesCount > 0 && (
                                 <span style={{
-                                  fontSize: 'clamp(0.82rem, 0.95vw, 0.95rem)',
+                                  fontSize: isMobile ? 'clamp(0.58rem, 2vw, 0.72rem)' : 'clamp(0.82rem, 0.95vw, 0.95rem)',
                                   fontWeight: '600',
                                   color: 'var(--text-main)',
-                                  lineHeight: 1.1,
+                                  lineHeight: 1,
                                   textAlign: 'left',
                                   opacity: 0.9,
+                                  whiteSpace: 'nowrap',
                                 }}>
-                                  {tradesCount} trade{tradesCount !== 1 ? 's' : ''}
+                                  {tradesCount}{isMobile ? 't' : ` trade${tradesCount !== 1 ? 's' : ''}`}
                                 </span>
                               )}
                             </div>
@@ -431,21 +563,23 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
                     {/* Weekly progress bar */}
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: '1fr 7fr',
+                      gridTemplateColumns: isMobile ? 'auto 1fr' : '100px 1fr',
                       gap: '6px',
                       alignItems: 'center',
+                      padding: isMobile ? '0 2px' : 0,
                     }}>
                       <div style={{
-                        fontSize: '0.65rem',
+                        fontSize: isMobile ? '0.62rem' : '0.65rem',
                         fontWeight: '700',
                         color: weekPnl >= 0 ? 'var(--accent-lime)' : 'var(--color-loss)',
-                        textAlign: 'right',
+                        textAlign: isMobile ? 'left' : 'right',
                         paddingRight: '4px',
+                        whiteSpace: 'nowrap',
                       }}>
-                        {weekPnl !== 0 ? (weekPnl >= 0 ? '+' : '') + weekPnl.toFixed(0) : ''}
+                        {weekPnl !== 0 ? (weekPnl >= 0 ? '+' : '') + formatCalendarPnl(weekPnl, isMobile) : ''}
                       </div>
                       <div style={{
-                        height: '4px',
+                        height: isMobile ? '3px' : '4px',
                         background: 'var(--border-color)',
                         borderRadius: '2px',
                         overflow: 'hidden',
@@ -470,7 +604,7 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
 
             {/* Legend */}
             <div style={{
-              padding: '10px 20px 14px',
+              padding: isMobile ? '8px 12px 10px' : '10px 20px 14px',
               borderTop: '1px solid var(--border-color)',
               display: 'flex',
               justifyContent: 'space-between',
@@ -478,22 +612,22 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
               flexWrap: 'wrap',
               gap: '8px',
             }}>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: isMobile ? '0.65rem' : '0.7rem', color: 'var(--text-muted)' }}>
                 ✏ Click a week's target to override it · Default: {formatCurrency(defaultWeeklyTarget)}/week
               </span>
-              <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: isMobile ? '10px' : '20px', alignItems: 'center', flexWrap: 'wrap' }}>
                 {[
                   { color: 'rgba(var(--accent-lime-rgb), 0.45)', label: 'Profit day' },
                   { color: 'rgba(var(--color-loss-rgb), 0.45)', label: 'Loss day' },
                 ].map(({ color, label }) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <div style={{ width: '10px', height: '10px', background: color, borderRadius: '2px' }} />
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{label}</span>
+                    <div style={{ width: '8px', height: '8px', background: color, borderRadius: '2px' }} />
+                    <span style={{ fontSize: isMobile ? '0.65rem' : '0.7rem', color: 'var(--text-muted)' }}>{label}</span>
                   </div>
                 ))}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <div style={{ width: '10px', height: '10px', border: `2px solid ${themeColor}`, borderRadius: '2px' }} />
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Selected day</span>
+                  <div style={{ width: '8px', height: '8px', border: `2px solid ${themeColor}`, borderRadius: '2px' }} />
+                  <span style={{ fontSize: isMobile ? '0.65rem' : '0.7rem', color: 'var(--text-muted)' }}>Selected</span>
                 </div>
               </div>
             </div>
@@ -528,7 +662,7 @@ export default function CalendarPage({ sessionReady, profile, showDemoData }) {
       <style>{`
         @media (max-width: 768px) {
           .calendar-week-col { display: none !important; }
-          .calendar-header-grid { grid-template-columns: repeat(7, 1fr) !important; padding: 10px 10px 4px !important; }
+          .calendar-header-grid { grid-template-columns: repeat(7, 1fr) !important; padding: 8px 6px 4px !important; }
           .calendar-row-grid { grid-template-columns: repeat(7, 1fr) !important; }
         }
       `}</style>

@@ -118,16 +118,18 @@ export default function ProfilePage({
       <div style={{ width: '100%' }}>
 
       {/* Page title */}
-      <div style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <UserCog size={26} style={{ color: 'var(--accent-lime)' }} />
-          <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-0.03em', margin: 0 }}>
-            Profile Settings
-          </h1>
+      <div className="page-header-row">
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <UserCog size={26} style={{ color: 'var(--accent-lime)' }} />
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-0.03em', margin: 0 }}>
+              Profile Settings
+            </h1>
+          </div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '6px' }}>
+            Configure your account defaults. Changes apply globally to all calculations.
+          </p>
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '6px' }}>
-          Configure your account defaults. Changes apply globally to all calculations.
-        </p>
       </div>
 
       {/* ── Top Primary Segment: Identity & Appearance ── */}

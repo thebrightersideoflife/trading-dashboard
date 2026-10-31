@@ -128,12 +128,7 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
 
         {/* ── Page header ───────────────────────────────────────────── */}
-        <header style={{
-          marginBottom: '2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}>
+        <header className="page-header-row">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <ArrowLeftRight size={26} style={{ color: 'var(--accent-lime)' }} />
@@ -151,7 +146,7 @@ export default function TradesPage({ sessionReady = true, showDemoData: showDemo
               Full trade history · edit and delete inline
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="page-header-actions">
             <button
               onClick={exportToCSV}
               disabled={visibleTrades.length === 0}

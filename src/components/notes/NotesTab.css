@@ -1137,6 +1137,11 @@
     grid-template-columns: repeat(2, 1fr) !important;
   }
 
+  .notes-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.875rem !important;
+  }
+
   .notes-header {
     flex-wrap: wrap;
     align-items: flex-start;

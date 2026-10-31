@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { supabase } from './api/supabaseClient';
 import LoginForm    from './components/auth/LoginForm';
 import Header       from './components/layout/Header';
@@ -81,6 +81,26 @@ function ProtectedRoute({ user, sessionReady, children }) {
   }
   if (!user) return <Navigate to="/login" replace />;
   return children;
+}
+
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    if (hash) {
+      const id = hash.replace('#', '');
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+    }
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [pathname, hash]);
+
+  return null;
 }
 
 export default function App() {
@@ -200,6 +220,7 @@ export default function App() {
     }}>
       <TradingBackdrop />
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
 
         <Route

@@ -181,6 +181,14 @@ export function useTradingData(sessionReady = true, showDemoProp = null, equityC
     if (sessionReady) fetchAll()
   }, [sessionReady, showDemoProp, equityCutoff, fetchAll])
 
+  useEffect(() => {
+    const handleTradeAdded = () => {
+      fetchAll()
+    }
+    window.addEventListener('tradeAdded', handleTradeAdded)
+    return () => window.removeEventListener('tradeAdded', handleTradeAdded)
+  }, [fetchAll])
+
   return {
     metrics,
     equityCurve,

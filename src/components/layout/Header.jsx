@@ -1,7 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../api/supabaseClient';
-import { TrendingUp, Trophy, BarChart3, Clock, Calendar } from 'lucide-react';
+import {
+  TrendingUp, Trophy, BarChart3, Clock, Calendar,
+  BookOpen, HelpCircle, LayoutDashboard, FileText, ArrowLeftRight, Plus
+} from 'lucide-react';
+import AddTradeModal from '../trades/AddTradeModal';
+import ImportTradesModal from '../trades/ImportTradesModal';
 
 const NAV_TABS = [
   { label: 'Dashboard', path: '/dashboard', available: true },
@@ -13,11 +18,13 @@ const NAV_TABS = [
   { label: 'Help',      path: '/help',      available: true },
 ];
 
-export default function Header({ profile, user}) {
+export default function Header({ profile, user }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(true);
 
   const dropdownRef = useRef(null);
 
@@ -57,7 +64,7 @@ export default function Header({ profile, user}) {
         }
 
         // ── 5. Fetch all trades to derive Timing Edge Analysis (Best/Worst hours & days) ──
-        const baseTradesView = isDemo ? 'trades' : 'trades'; // table source
+        const baseTradesView = 'trades'; // table source
         let { data: rawTrades } = await supabase
           .from(baseTradesView)
           .select('close_time, realized_pnl, is_mock')
@@ -145,6 +152,40 @@ export default function Header({ profile, user}) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  // Responsive scroll listener: Collapse header on scroll down, reappear on scroll up
+  useEffect(() => {
+    let lastScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+
+    const handleScroll = () => {
+      const currentScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+      const delta = currentScrollY - lastScrollY;
+
+      // Near top of page -> Keep header visible
+      if (currentScrollY <= 40) {
+        setHeaderVisible(true);
+      }
+      // Scrolling DOWN -> Collapse header
+      else if (delta > 2) {
+        setHeaderVisible(false);
+        setProfileOpen(false);
+      }
+      // Scrolling UP -> Reappear header immediately regardless of scroll position
+      else if (delta < -2) {
+        setHeaderVisible(true);
+      }
+
+      lastScrollY = Math.max(0, currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/login');
@@ -154,342 +195,572 @@ export default function Header({ profile, user}) {
   const userInitial = userEmail ? userEmail[0].toUpperCase() : '?';
 
   return (
-    <header style={{
-      position: 'sticky',
-      top: 0,
-      zIndex: 100,
-      background: 'rgba(10,10,15,0.85)',
-      backdropFilter: 'blur(12px)',
-      WebkitBackdropFilter: 'blur(12px)',
-      borderBottom: '1px solid var(--border-color)',
-    }}>
-      {/* ── Main header row ── */}
-      <div style={{
-        height: '70px',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 28px',
-        gap: '32px',
+    <>
+      <header style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        background: 'rgba(10, 10, 15, 0.92)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderBottom: '1px solid var(--border-color)',
+        transform: headerVisible ? 'translateY(0)' : 'translateY(-100%)',
+        transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
       }}>
-      {/* Brand */}
-      <div
-        style={{ display: 'flex', alignItems: 'center', flexShrink: 0, cursor: 'pointer' }}
-        onClick={() => navigate('/dashboard')}
-      >
-        <img
-          src="/CogentLog_Logo_2.png"
-          alt="CogentLog"
-          style={{ height: '28px', width: 'auto', display: 'block' }}
-        />
-      </div>
-
-        {/* Hamburger — mobile only */}
-        <button
-          onClick={() => setMobileNavOpen(o => !o)}
-          aria-label="Toggle navigation"
+        {/* ── Main header row ── */}
+        <div
+          className="header-main-row"
           style={{
-            display: 'none',
-            background: 'none', border: 'none',
-            cursor: 'pointer', padding: '6px',
-            color: 'var(--text-main)',
-            flexShrink: 0,
+            height: '70px',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0 28px',
+            gap: '24px',
+            justifyContent: 'space-between',
           }}
-          className="mobile-hamburger"
         >
-          {mobileNavOpen
-            ? <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4L16 16M16 4L4 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-            : <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-          }
+          {/* Brand Logo */}
+          <div
+            style={{ display: 'flex', alignItems: 'center', flexShrink: 0, cursor: 'pointer' }}
+            onClick={() => navigate('/dashboard')}
+          >
+            <img
+              src="/CogentLog_Logo_2.png"
+              alt="CogentLog"
+              style={{ height: '28px', width: 'auto', display: 'block' }}
+            />
+          </div>
+
+          {/* Desktop Nav tabs */}
+          <nav className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1 }}>
+            {NAV_TABS.map((tab) => {
+              const isActive = location.pathname === tab.path;
+              return (
+                <div key={tab.path} style={{ position: 'relative' }} className="nav-tab-wrapper">
+                  <button
+                    onClick={() => tab.available && navigate(tab.path)}
+                    style={{
+                      padding: '7px 16px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: isActive ? 'var(--bg-card)' : 'transparent',
+                      color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
+                      fontSize: '14px',
+                      fontWeight: isActive ? '600' : '400',
+                      cursor: tab.available ? 'pointer' : 'not-allowed',
+                      fontFamily: 'inherit',
+                      transition: 'color 0.15s, background 0.15s',
+                      position: 'relative',
+                      whiteSpace: 'nowrap',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (tab.available && !isActive) {
+                        e.currentTarget.style.color = 'var(--text-main)';
+                        e.currentTarget.style.background = 'var(--bg-card-hover)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.color = 'var(--text-muted)';
+                        e.currentTarget.style.background = 'transparent';
+                      }
+                    }}
+                  >
+                    {tab.label}
+                    {isActive && (
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '-1px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '16px',
+                        height: '2px',
+                        background: 'var(--accent-lime)',
+                        borderRadius: '1px',
+                      }} />
+                    )}
+                  </button>
+
+                  {!tab.available && (
+                    <div className="coming-soon-tooltip" style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 8px)',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '6px',
+                      padding: '6px 10px',
+                      fontSize: '11px',
+                      color: 'var(--text-muted)',
+                      whiteSpace: 'nowrap',
+                      pointerEvents: 'none',
+                      opacity: 0,
+                      transition: 'opacity 0.15s',
+                      zIndex: 200,
+                    }}>
+                      🚧 Coming soon
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+
+          {/* Dynamic Personal Header Analytics Insight Banner (Desktop) */}
+          <div
+            onClick={() => {
+              if (insights.length === 0) return;
+              const item = insights[insightIndex];
+              if (item.type === 'winRate' || item.type === 'bestTrade' || item.type === 'execution') {
+                navigate('/analytics#edge');
+              } else if (item.type === 'bestDay' || item.type === 'worstDay' || item.type === 'bestHour' || item.type === 'worstHour') {
+                navigate('/analytics#timing');
+              } else {
+                navigate('/analytics#edge');
+              }
+            }}
+            style={{
+              fontSize: '0.88rem',
+              fontWeight: '600',
+              color: 'var(--text-muted)',
+              marginRight: '12px',
+              whiteSpace: 'nowrap',
+              opacity: fade ? 1 : 0,
+              transform: fade ? 'translateY(0)' : 'translateY(-1px)',
+              transition: 'opacity 0.25s ease, transform 0.25s ease, color 0.15s ease',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              userSelect: 'none',
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-main)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+            className="header-insights-bar"
+          >
+            {(() => {
+              if (insights.length === 0) {
+                const displayName = profile?.preferred_name?.trim() || user?.email?.split('@')[0];
+                return <span>👋 Hi, {displayName}</span>;
+              }
+              const item = insights[insightIndex];
+              if (item.type === 'greeting') {
+                return <span>{item.text}</span>;
+              }
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {item.type === 'winRate' && <TrendingUp size={14} style={{ color: 'var(--accent-lime)' }} />}
+                  {item.type === 'bestTrade' && <Trophy size={14} style={{ color: 'var(--accent-amber, #f59f00)' }} />}
+                  {item.type === 'execution' && <BarChart3 size={14} style={{ color: 'var(--accent-blue, #4dabf7)' }} />}
+                  {(item.type === 'bestDay' || item.type === 'worstDay') && <Calendar size={14} style={{ color: item.type === 'bestDay' ? 'var(--accent-lime)' : 'var(--color-loss)' }} />}
+                  {(item.type === 'bestHour' || item.type === 'worstHour') && <Clock size={14} style={{ color: item.type === 'bestHour' ? 'var(--accent-lime)' : 'var(--color-loss)' }} />}
+                  <span>{item.text}</span>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Mobile top header icons (Analytics, Journal, Help, Account) */}
+          <div className="mobile-header-icons" style={{ display: 'none', alignItems: 'center', gap: '4px' }}>
+            {/* Analytics */}
+            <button
+              onClick={() => navigate('/analytics')}
+              aria-label="Analytics"
+              title="Analytics"
+              style={{
+                width: '36px', height: '36px',
+                borderRadius: '8px', border: 'none',
+                background: location.pathname === '/analytics' ? 'var(--bg-card)' : 'transparent',
+                color: location.pathname === '/analytics' ? 'var(--accent-lime)' : 'var(--text-muted)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', transition: 'all 0.15s ease',
+              }}
+            >
+              <BarChart3 size={20} strokeWidth={location.pathname === '/analytics' ? 2.3 : 1.8} />
+            </button>
+
+            {/* Journal */}
+            <button
+              onClick={() => navigate('/journal')}
+              aria-label="Journal"
+              title="Journal"
+              style={{
+                width: '36px', height: '36px',
+                borderRadius: '8px', border: 'none',
+                background: location.pathname === '/journal' ? 'var(--bg-card)' : 'transparent',
+                color: location.pathname === '/journal' ? 'var(--accent-lime)' : 'var(--text-muted)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', transition: 'all 0.15s ease',
+              }}
+            >
+              <BookOpen size={20} strokeWidth={location.pathname === '/journal' ? 2.3 : 1.8} />
+            </button>
+
+            {/* Help */}
+            <button
+              onClick={() => navigate('/help')}
+              aria-label="Help"
+              title="Help"
+              style={{
+                width: '36px', height: '36px',
+                borderRadius: '8px', border: 'none',
+                background: location.pathname === '/help' ? 'var(--bg-card)' : 'transparent',
+                color: location.pathname === '/help' ? 'var(--accent-lime)' : 'var(--text-muted)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', transition: 'all 0.15s ease',
+              }}
+            >
+              <HelpCircle size={20} strokeWidth={location.pathname === '/help' ? 2.3 : 1.8} />
+            </button>
+          </div>
+
+          {/* Right: profile avatar */}
+          <div style={{ position: 'relative', flexShrink: 0 }} ref={dropdownRef}>
+            <button
+              onClick={() => setProfileOpen(o => !o)}
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                background: profile?.avatar_url ? 'transparent' : (profile?.theme_color || 'var(--accent-lime)'),
+                border: profile?.avatar_url ? '1px solid var(--border-color)' : 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '15px',
+                fontWeight: '700',
+                color: '#0a0a0f',
+                overflow: 'hidden',
+                padding: 0,
+              }}
+            >
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="Avatar"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={e => {
+                    e.target.style.display = 'none';
+                    e.currentTarget.parentElement.style.background = profile?.theme_color || 'var(--accent-lime)';
+                    e.currentTarget.parentElement.innerText = userInitial;
+                  }}
+                />
+              ) : userInitial}
+            </button>
+
+            {profileOpen && (
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 10px)',
+                right: 0,
+                width: '240px',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-xl)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                zIndex: 300,
+                overflow: 'hidden',
+              }}>
+                {/* User info */}
+                <div style={{
+                  padding: '14px 16px 12px',
+                  borderBottom: '1px solid var(--border-color)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}>
+                  <div style={{
+                    width: '34px', height: '34px', borderRadius: '50%',
+                    background: profile?.avatar_url ? 'transparent' : (profile?.theme_color || 'var(--accent-lime)'),
+                    border: profile?.avatar_url ? '1px solid var(--border-color)' : 'none',
+                    display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    fontSize: '14px', fontWeight: '700', color: '#0a0a0f', flexShrink: 0,
+                    overflow: 'hidden',
+                  }}>
+                    {profile?.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt="Avatar"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={e => {
+                          e.target.style.display = 'none';
+                          e.currentTarget.parentElement.style.background = profile?.theme_color || 'var(--accent-lime)';
+                          e.currentTarget.parentElement.innerText = userInitial;
+                        }}
+                      />
+                    ) : userInitial}
+                  </div>
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {userEmail}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      {profile?.currency ?? 'USD'} · Target {profile?.profit_target ?? 30}%
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ padding: '8px' }}>
+                  {/* Profile settings link */}
+                  <MenuBtn
+                    icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 2L12 4.5L5 11.5H2.5V9L9.5 2Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>}
+                    onClick={() => { setProfileOpen(false); navigate('/profile'); }}
+                  >
+                    Edit Profile
+                  </MenuBtn>
+
+                  <div style={{ height: '1px', background: 'var(--border-color)', margin: '4px 0 8px' }} />
+
+                  <MenuBtn
+                    icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2H2V12H5M9.5 9.5L12 7L9.5 4.5M12 7H5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    onClick={handleLogout}
+                    danger
+                  >
+                    Log Out
+                  </MenuBtn>
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>{/* end main header row */}
+      </header>
+      <div className="header-spacer" style={{ height: '70px' }} />
+
+      {/* ── Mobile Bottom Navigation Bar (Mobile View Only) ── */}
+      <nav
+        className="mobile-bottom-nav"
+        style={{
+          display: 'none',
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '66px',
+          background: 'rgba(10, 10, 15, 0.94)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderTop: '1px solid var(--border-color)',
+          alignItems: 'center',
+          justifyContent: 'space-around',
+          padding: '0 4px calc(env(safe-area-inset-bottom, 0px) + 2px)',
+          zIndex: 999,
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.5)',
+        }}
+      >
+        {/* 1. Account Overview */}
+        <button
+          onClick={() => navigate('/dashboard')}
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '3px',
+            background: 'none',
+            border: 'none',
+            color: location.pathname === '/dashboard' ? 'var(--accent-lime)' : 'var(--text-muted)',
+            cursor: 'pointer',
+            padding: '6px 0',
+            fontFamily: 'inherit',
+            transition: 'color 0.15s ease',
+          }}
+        >
+          <LayoutDashboard size={20} strokeWidth={location.pathname === '/dashboard' ? 2.3 : 1.8} />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: location.pathname === '/dashboard' ? '600' : '400',
+            letterSpacing: '0.1px',
+            whiteSpace: 'nowrap',
+          }}>
+            Overview
+          </span>
         </button>
 
-      {/* Nav tabs — hidden on mobile, shown via dropdown */}
-      <nav className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1 }}>
-        {NAV_TABS.map((tab) => {
-          const isActive = location.pathname === tab.path;
-          return (
-            <div key={tab.path} style={{ position: 'relative' }} className="nav-tab-wrapper">
-              <button
-                onClick={() => tab.available && navigate(tab.path)}
-                style={{
-                  padding: '7px 16px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: isActive ? 'var(--bg-card)' : 'transparent',
-                  color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
-                  fontSize: '14px',
-                  fontWeight: isActive ? '600' : '400',
-                  cursor: tab.available ? 'pointer' : 'not-allowed',
-                  fontFamily: 'inherit',
-                  transition: 'color 0.15s, background 0.15s',
-                  position: 'relative',
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={(e) => {
-                  if (tab.available && !isActive) {
-                    e.currentTarget.style.color = 'var(--text-main)';
-                    e.currentTarget.style.background = 'var(--bg-card-hover)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.color = 'var(--text-muted)';
-                    e.currentTarget.style.background = 'transparent';
-                  }
-                }}
-              >
-                {tab.label}
-                {isActive && (
-                  <span style={{
-                    position: 'absolute',
-                    bottom: '-1px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '16px',
-                    height: '2px',
-                    background: 'var(--accent-lime)',
-                    borderRadius: '1px',
-                  }} />
-                )}
-              </button>
-
-              {!tab.available && (
-                <div className="coming-soon-tooltip" style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
-                  fontSize: '11px',
-                  color: 'var(--text-muted)',
-                  whiteSpace: 'nowrap',
-                  pointerEvents: 'none',
-                  opacity: 0,
-                  transition: 'opacity 0.15s',
-                  zIndex: 200,
-                }}>
-                  🚧 Coming soon
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </nav>
-
-      {/* Dynamic Personal Header Analytics Insight Banner */}
-      <div
-        onClick={() => {
-          if (insights.length === 0) return;
-          const item = insights[insightIndex];
-          if (item.type === 'winRate' || item.type === 'bestTrade' || item.type === 'execution') {
-            navigate('/analytics#edge');
-          } else if (item.type === 'bestDay' || item.type === 'worstDay' || item.type === 'bestHour' || item.type === 'worstHour') {
-            navigate('/analytics#timing');
-          } else {
-            navigate('/analytics#edge');
-          }
-        }}
-        style={{
-          fontSize: '0.88rem',
-          fontWeight: '600',
-          color: 'var(--text-muted)',
-          marginRight: '12px',
-          whiteSpace: 'nowrap',
-          opacity: fade ? 1 : 0,
-          transform: fade ? 'translateY(0)' : 'translateY(-1px)',
-          transition: 'opacity 0.25s ease, transform 0.25s ease, color 0.15s ease',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          userSelect: 'none',
-        }}
-        onMouseEnter={e => e.currentTarget.style.color = 'var(--text-main)'}
-        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-        className="header-insights-bar"
-      >
-        {(() => {
-          if (insights.length === 0) {
-            const displayName = profile?.preferred_name?.trim() || user?.email?.split('@')[0];
-            return <span>👋 Hi, {displayName}</span>;
-          }
-          const item = insights[insightIndex];
-          if (item.type === 'greeting') {
-            return <span>{item.text}</span>;
-          }
-          return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {item.type === 'winRate' && <TrendingUp size={14} style={{ color: 'var(--accent-lime)' }} />}
-              {item.type === 'bestTrade' && <Trophy size={14} style={{ color: 'var(--accent-amber, #f59f00)' }} />}
-              {item.type === 'execution' && <BarChart3 size={14} style={{ color: 'var(--accent-blue, #4dabf7)' }} />}
-              {(item.type === 'bestDay' || item.type === 'worstDay') && <Calendar size={14} style={{ color: item.type === 'bestDay' ? 'var(--accent-lime)' : 'var(--color-loss)' }} />}
-              {(item.type === 'bestHour' || item.type === 'worstHour') && <Clock size={14} style={{ color: item.type === 'bestHour' ? 'var(--accent-lime)' : 'var(--color-loss)' }} />}
-              <span>{item.text}</span>
-            </div>
-          );
-        })()}
-      </div>
-
-      {/* Right: profile avatar */}
-      <div style={{ position: 'relative', flexShrink: 0 }} ref={dropdownRef}>
+        {/* 2. Calendar */}
         <button
-          onClick={() => setProfileOpen(o => !o)}
+          onClick={() => navigate('/calendar')}
           style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '50%',
-            background: profile?.avatar_url ? 'transparent' : (profile?.theme_color || 'var(--accent-lime)'),
-            border: profile?.avatar_url ? '1px solid var(--border-color)' : 'none',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '3px',
+            background: 'none',
+            border: 'none',
+            color: location.pathname === '/calendar' ? 'var(--accent-lime)' : 'var(--text-muted)',
             cursor: 'pointer',
+            padding: '6px 0',
+            fontFamily: 'inherit',
+            transition: 'color 0.15s ease',
+          }}
+        >
+          <Calendar size={20} strokeWidth={location.pathname === '/calendar' ? 2.3 : 1.8} />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: location.pathname === '/calendar' ? '600' : '400',
+            letterSpacing: '0.1px',
+            whiteSpace: 'nowrap',
+          }}>
+            Calendar
+          </span>
+        </button>
+
+        {/* 3. Middle "+" Add Trade Circle */}
+        <button
+          onClick={() => setShowAddModal(true)}
+          aria-label="Add Trade"
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '3px',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0 0 4px 0',
+            fontFamily: 'inherit',
+          }}
+        >
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '50%',
+            background: 'var(--accent-lime)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '15px',
-            fontWeight: '700',
             color: '#0a0a0f',
-            overflow: 'hidden',
-            padding: 0,
-          }}
-        >
-          {profile?.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt="Avatar"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              onError={e => {
-                e.target.style.display = 'none';
-                e.currentTarget.parentElement.style.background = profile?.theme_color || 'var(--accent-lime)';
-                e.currentTarget.parentElement.innerText = userInitial;
-              }}
-            />
-          ) : userInitial}
+            boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
+            marginTop: '-14px',
+            transition: 'transform 0.15s ease',
+          }}>
+            <Plus size={22} strokeWidth={2.8} />
+          </div>
+          <span style={{
+            fontSize: '10px',
+            fontWeight: '600',
+            color: 'var(--accent-lime)',
+            letterSpacing: '0.1px',
+            whiteSpace: 'nowrap',
+          }}>
+            Add Trade
+          </span>
         </button>
 
-        {profileOpen && (
-          <div style={{
-            position: 'absolute',
-            top: 'calc(100% + 10px)',
-            right: 0,
-            width: '240px',
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-xl)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-            zIndex: 300,
-            overflow: 'hidden',
+        {/* 4. Notes */}
+        <button
+          onClick={() => navigate('/notes')}
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '3px',
+            background: 'none',
+            border: 'none',
+            color: location.pathname === '/notes' ? 'var(--accent-lime)' : 'var(--text-muted)',
+            cursor: 'pointer',
+            padding: '6px 0',
+            fontFamily: 'inherit',
+            transition: 'color 0.15s ease',
+          }}
+        >
+          <FileText size={20} strokeWidth={location.pathname === '/notes' ? 2.3 : 1.8} />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: location.pathname === '/notes' ? '600' : '400',
+            letterSpacing: '0.1px',
+            whiteSpace: 'nowrap',
           }}>
-            {/* User info */}
-            <div style={{
-              padding: '14px 16px 12px',
-              borderBottom: '1px solid var(--border-color)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-            }}>
-              <div style={{
-                width: '34px', height: '34px', borderRadius: '50%',
-                background: profile?.avatar_url ? 'transparent' : (profile?.theme_color || 'var(--accent-lime)'),
-                border: profile?.avatar_url ? '1px solid var(--border-color)' : 'none',
-                display: 'flex',
-                alignItems: 'center', justifyContent: 'center',
-                fontSize: '14px', fontWeight: '700', color: '#0a0a0f', flexShrink: 0,
-                overflow: 'hidden',
-              }}>
-                {profile?.avatar_url ? (
-                  <img
-                    src={profile.avatar_url}
-                    alt="Avatar"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={e => {
-                      e.target.style.display = 'none';
-                      e.currentTarget.parentElement.style.background = profile?.theme_color || 'var(--accent-lime)';
-                      e.currentTarget.parentElement.innerText = userInitial;
-                    }}
-                  />
-                ) : userInitial}
-              </div>
-              <div style={{ overflow: 'hidden' }}>
-                <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {userEmail}
-                </div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  {profile?.currency ?? 'USD'} · Target {profile?.profit_target ?? 30}%
-                </div>
-              </div>
-            </div>
+            Notes
+          </span>
+        </button>
 
-            <div style={{ padding: '8px' }}>
-              {/* Profile settings link */}
-              <MenuBtn
-                icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 2L12 4.5L5 11.5H2.5V9L9.5 2Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>}
-                onClick={() => { setProfileOpen(false); navigate('/profile'); }}
-              >
-                Edit Profile
-              </MenuBtn>
+        {/* 5. Trades */}
+        <button
+          onClick={() => navigate('/trades')}
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '3px',
+            background: 'none',
+            border: 'none',
+            color: location.pathname === '/trades' ? 'var(--accent-lime)' : 'var(--text-muted)',
+            cursor: 'pointer',
+            padding: '6px 0',
+            fontFamily: 'inherit',
+            transition: 'color 0.15s ease',
+          }}
+        >
+          <ArrowLeftRight size={20} strokeWidth={location.pathname === '/trades' ? 2.3 : 1.8} />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: location.pathname === '/trades' ? '600' : '400',
+            letterSpacing: '0.1px',
+            whiteSpace: 'nowrap',
+          }}>
+            Trades
+          </span>
+        </button>
+      </nav>
 
-              <div style={{ height: '1px', background: 'var(--border-color)', margin: '4px 0 8px' }} />
-
-              <MenuBtn
-                icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2H2V12H5M9.5 9.5L12 7L9.5 4.5M12 7H5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                onClick={handleLogout}
-                danger
-              >
-                Log Out
-              </MenuBtn>
-            </div>
-          </div>
-        )}
-      </div>
-
-      </div>{/* end main header row */}
-
-      {/* ── Mobile nav dropdown ── */}
-      {mobileNavOpen && (
-        <nav style={{
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '8px 16px 16px',
-          borderTop: '1px solid var(--border-color)',
-          gap: '2px',
-          background: 'rgba(10,10,15,0.97)',
-        }}>
-          {NAV_TABS.map(tab => {
-            const isActive = location.pathname === tab.path;
-            return (
-              <button
-                key={tab.path}
-                onClick={() => { if (tab.available) { navigate(tab.path); setMobileNavOpen(false); } }}
-                style={{
-                  padding: '11px 14px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: isActive ? 'var(--bg-card)' : 'transparent',
-                  color: isActive ? 'var(--accent-lime)' : tab.available ? 'var(--text-main)' : 'var(--text-muted)',
-                  fontSize: '15px',
-                  fontWeight: isActive ? '700' : '400',
-                  cursor: tab.available ? 'pointer' : 'not-allowed',
-                  fontFamily: 'inherit',
-                  textAlign: 'left',
-                  borderLeft: isActive ? '3px solid var(--accent-lime)' : '3px solid transparent',
-                }}
-              >
-                {tab.label}{!tab.available ? ' 🚧' : ''}
-              </button>
-            );
-          })}
-        </nav>
+      {/* Global Add / Import Trade Modals from layout bottom bar */}
+      {showAddModal && (
+        <AddTradeModal
+          onClose={() => setShowAddModal(false)}
+          onTradeAdded={() => {
+            window.dispatchEvent(new Event('tradeAdded'));
+            setShowAddModal(false);
+          }}
+          onOpenImport={() => {
+            setShowAddModal(false);
+            setShowImportModal(true);
+          }}
+        />
+      )}
+      {showImportModal && (
+        <ImportTradesModal
+          onClose={() => setShowImportModal(false)}
+          onTradesSaved={() => {
+            window.dispatchEvent(new Event('tradeAdded'));
+            setShowImportModal(false);
+          }}
+        />
       )}
 
       <style>{`
         .nav-tab-wrapper:hover .coming-soon-tooltip { opacity: 1 !important; }
         @media (max-width: 768px) {
           .desktop-nav { display: none !important; }
-          .mobile-hamburger { display: flex !important; }
+          .header-insights-bar { display: none !important; }
+          .mobile-header-icons { display: flex !important; }
+          .mobile-bottom-nav { display: flex !important; }
+          .header-spacer { height: 60px !important; }
+          .header-main-row {
+            padding: 0 16px !important;
+            height: 60px !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .mobile-header-icons { display: none !important; }
+          .mobile-bottom-nav { display: none !important; }
         }
       `}</style>
-    </header>
+    </>
   );
 }
 
